@@ -20,45 +20,45 @@ export const API_ENDPOINTS = {
   
   // Tools endpoints
   TOOLS: {
-    BASE: '/api/tools',
-    BY_ID: (id: string) => `/api/tools/${id}`,
-    CATEGORIES: '/api/tools/categories',
+    BASE: '/api/v1/tools',
+    BY_ID: (id: string) => `/api/v1/tools/${id}`,
+    CATEGORIES: '/api/v1/tools/categories',
   },
   
   // Purchases endpoints
   PURCHASES: {
-    BASE: '/api/purchases',
-    BY_ID: (id: string) => `/api/purchases/${id}`,
-    CHANGE_KEY: (id: string) => `/api/purchases/${id}/key`,
+    BASE: '/api/v1/purchases',
+    BY_ID: (id: string) => `/api/v1/purchases/${id}`,
+    CHANGE_KEY: (id: string) => `/api/v1/purchases/${id}/key`,
   },
   
   // Payment endpoints
   PAYMENTS: {
-    BASE: '/api/payments',
-    DEPOSIT: '/api/deposit',
-    HISTORY: '/api/payments/history',
+    BASE: '/api/v1/payments',
+    DEPOSIT: '/api/v1/deposit',
+    HISTORY: '/api/v1/payments/history',
   },
   
   // Discount codes endpoints
   DISCOUNT_CODES: {
-    VALIDATE: '/api/discount-codes/validate',
-    BASE: '/api/discount-codes',
+    VALIDATE: '/api/v1/discount-codes/validate',
+    BASE: '/api/v1/discount-codes',
   },
   
   // User endpoints
   USER: {
-    PROFILE: '/api/user/profile',
-    PASSWORD: '/api/user/password',
-    SETTINGS: '/api/user/settings',
+    PROFILE: '/api/v1/user/profile',
+    PASSWORD: '/api/v1/user/password',
+    SETTINGS: '/api/v1/user/settings',
   },
   
   // Admin endpoints
   ADMIN: {
-    USERS: '/api/admin/users',
-    TOOLS: '/api/admin/tools',
-    CATEGORIES: '/api/admin/categories',
-    VALIDATIONS: '/api/admin/validations',
-    STATISTICS: '/api/admin/statistics',
+    USERS: '/api/v1/admin/users',
+    TOOLS: '/api/v1/admin/tools',
+    CATEGORIES: '/api/v1/admin/categories',
+    VALIDATIONS: '/api/v1/admin/validations',
+    STATISTICS: '/api/v1/admin/statistics',
   },
 } as const;
 

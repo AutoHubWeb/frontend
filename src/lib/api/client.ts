@@ -91,6 +91,8 @@ const requestInterceptors = {
       console.log(`📤 ${config.method} ${config.url}`, {
         data: config.data,
         params: config.params,
+        headers: config.headers,
+        baseURL: API_CONFIG.BASE_URL,
       });
     }
     return config;
@@ -227,6 +229,7 @@ export class ApiClient {
           headers: processedConfig.headers,
           signal: controller.signal,
           credentials: 'include',
+          mode: 'cors', // Explicitly set CORS mode
         };
 
         // Add body for non-GET requests
