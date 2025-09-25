@@ -14,7 +14,7 @@ import {
   ArrowRight,
   Clock
 } from "lucide-react";
-import { Link } from "wouter";
+import Link from "next/link";
 import type { Purchase, Tool, Payment } from "@/lib/api/types";
 
 export default function Dashboard() {

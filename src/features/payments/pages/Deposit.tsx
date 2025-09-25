@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from "react"
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,7 +23,7 @@ import {
   Clock,
   DollarSign
 } from "lucide-react";
-import { useState } from "react";
+;
 import type { Payment } from "@/lib/api/types";
 
 export default function Deposit() {

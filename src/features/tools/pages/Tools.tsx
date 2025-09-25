@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from "react";
 import { Layout } from "@/components";
 import { ToolCard } from "@/features/tools";
@@ -163,7 +165,7 @@ export default function Tools() {
                     {searchQuery ? (
                       <>
                         Tìm thấy <span className="font-semibold text-cyan-600 dark:text-cyan-400">{filteredTools.length}</span> kết quả cho 
-                        <span className="font-semibold"> "{searchQuery}"</span>
+                        <span className="font-semibold"> &ldquo;{searchQuery}&rdquo;</span>
                       </>
                     ) : (
                       <>

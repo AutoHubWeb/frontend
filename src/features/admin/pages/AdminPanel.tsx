@@ -1,4 +1,7 @@
-import { useParams } from "wouter";
+'use client'
+
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -20,8 +23,8 @@ import {
   Shield,
   AlertTriangle
 } from "lucide-react";
-import { Link } from "wouter";
-import { useEffect } from "react";
+import Link from "next/link";
+;
 import { useToast } from "@/hooks/use-toast";
 import type { User, Tool, KeyValidation } from "@shared/schema";
 

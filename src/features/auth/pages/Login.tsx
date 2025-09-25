@@ -1,20 +1,22 @@
-import { useAuth } from "@/features/auth";
-import { Layout } from "@/components";
-import { LoginForm } from "@/features/auth";
-import { motion } from "framer-motion";
-import { useLocation } from "wouter";
-import { useEffect } from "react";
+'use client'
+
+import { useAuth } from "@/features/auth"
+import { Layout } from "@/components"
+import { LoginForm } from "@/features/auth"
+import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function Login() {
   const { user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  const router = useRouter();
 
   // If user is already logged in, redirect to home
   useEffect(() => {
     if (user && !isLoading) {
-      setLocation("/");
+      router.push("/");
     }
-  }, [user, isLoading, setLocation]);
+  }, [user, isLoading, router]);
 
   // Set page title
   useEffect(() => {

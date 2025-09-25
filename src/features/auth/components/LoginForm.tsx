@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+'use client'
+
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 import { Lock, User, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "@/features/auth";
@@ -20,7 +22,7 @@ interface LoginFormProps {
 export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberAccount, setRememberAccount] = useState(false);
-  const [, setLocation] = useLocation();
+  const router = useRouter();
   const { toast } = useToast();
   const { login, isLoading } = useAuth();
 
@@ -58,7 +60,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         description: "Chào mừng bạn đã quay trở lại!",
       });
 
-      setLocation("/");
+      router.push("/");
       
       if (onLoginSuccess) {
         onLoginSuccess();
@@ -80,7 +82,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   };
 
   const handleRegister = () => {
-    setLocation("/register");
+    router.push("/register")
   };
 
   const handleGoogleLogin = () => {

@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+'use client'
+
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 import { UserPlus, LogIn } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { useForm } from "react-hook-form";
@@ -16,7 +18,7 @@ interface RegisterFormProps {
 }
 
 export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
-  const [, setLocation] = useLocation();
+  const router = useRouter();
   const { toast } = useToast();
   const { register, isLoading } = useAuth();
 
@@ -41,7 +43,7 @@ export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
       });
 
       // Redirect to login page
-      setLocation("/login");
+      router.push("/login")
       
       if (onRegisterSuccess) {
         onRegisterSuccess();
@@ -56,7 +58,7 @@ export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
   };
 
   const handleBackToLogin = () => {
-    setLocation("/login");
+    router.push("/login")
   };
 
 

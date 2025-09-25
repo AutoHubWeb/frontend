@@ -1,4 +1,7 @@
-import { Link, useLocation } from "wouter";
+'use client'
+
+import Link from "next/link"
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/features/auth";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,7 +16,7 @@ import {
 } from "lucide-react";
 
 export function Sidebar() {
-  const [location] = useLocation();
+  const pathname = usePathname();
   const { user } = useAuth();
 
   const navigation = [
@@ -92,7 +95,7 @@ export function Sidebar() {
             href={item.href}
             className={cn(
               "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              location === item.href
+              pathname === item.href
                 ? "bg-accent text-accent-foreground"
                 : "hover:bg-accent hover:text-accent-foreground"
             )}
@@ -117,7 +120,7 @@ export function Sidebar() {
                 href={item.href}
                 className={cn(
                   "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  location === item.href
+                  pathname === item.href
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent hover:text-accent-foreground"
                 )}

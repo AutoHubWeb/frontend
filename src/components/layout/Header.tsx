@@ -1,4 +1,7 @@
-import { Link, useLocation } from "wouter";
+'use client'
+
+import Link from "next/link"
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/app/providers";
 import { useAuth } from "@/features/auth";
@@ -18,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "./Sidebar";
 
 export function Header() {
-  const [location] = useLocation();
+  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -71,7 +74,7 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location === item.href
+                  pathname === item.href
                     ? "text-primary"
                     : "text-muted-foreground"
                 }`}

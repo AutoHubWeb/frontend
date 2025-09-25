@@ -1,3 +1,5 @@
+'use client'
+
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";

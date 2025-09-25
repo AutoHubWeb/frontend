@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+'use client'
+
+import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -29,7 +31,7 @@ import {
 
 export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const [location] = useLocation();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Always clear session storage on every page load to ensure modal shows

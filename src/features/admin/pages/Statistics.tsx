@@ -1,9 +1,11 @@
+'use client'
+
 import { useAuth } from "@/features/auth";
 import { Layout } from "@/components";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import Link from "next/link";
 import { useEffect } from "react";
 
 export default function Statistics() {

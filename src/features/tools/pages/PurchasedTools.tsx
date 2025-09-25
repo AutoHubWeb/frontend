@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from "react"
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,8 +32,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useState } from "react";
-import { Link } from "wouter";
+;
+import Link from "next/link";
 import type { Purchase, Tool } from "@/lib/api/types";
 
 export default function PurchasedTools() {

@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from "react";
 import { Layout } from "@/components";
 import { ToolCard } from "@/features/tools";
@@ -169,7 +171,7 @@ export default function Home() {
               </div>
               {searchQuery && (
                 <p className="text-sm text-muted-foreground mt-2 text-center">
-                  Tìm thấy {filteredTools.length} tools và {filteredVPS.length} VPS cho "{searchQuery}"
+                  Tìm thấy {filteredTools.length} tools và {filteredVPS.length} VPS cho &ldquo;{searchQuery}&rdquo;
                 </p>
               )}
             </div>

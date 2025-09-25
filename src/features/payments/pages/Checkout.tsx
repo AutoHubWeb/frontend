@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+'use client'
+
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,7 +28,8 @@ import {
 import type { Tool, DiscountCode } from "@/lib/api/types";
 
 export default function Checkout() {
-  const [, setLocation] = useLocation();
+  const router = useRouter()
+  const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -37,15 +41,14 @@ export default function Checkout() {
 
   // Get tool ID from URL params or localStorage
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const toolId = urlParams.get('tool');
+    const toolId = searchParams.get('tool')
     if (toolId) {
-      setSelectedToolId(toolId);
+      setSelectedToolId(toolId)
     } else {
       // If no tool specified, redirect back to tools page
-      setLocation('/tools');
+      router.push('/tools')
     }
-  }, [setLocation]);
+  }, [router, searchParams]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -103,7 +106,7 @@ export default function Checkout() {
       
       // Redirect to purchased tools page
       setTimeout(() => {
-        setLocation('/purchased-tools');
+        router.push('/purchased-tools');
       }, 1500);
     },
     onError: (error) => {
@@ -288,7 +291,7 @@ export default function Checkout() {
                             <CheckCircle className="h-5 w-5 text-emerald-600" />
                             <div>
                               <p className="font-medium text-emerald-800 dark:text-emerald-200">
-                                Mã "{appliedDiscount.code}" đã được áp dụng
+                                Mã &ldquo;{appliedDiscount.code}&rdquo; đã được áp dụng
                               </p>
                               <p className="text-sm text-emerald-600 dark:text-emerald-400">
                                 Giảm {appliedDiscount.discountType === 'percentage' 

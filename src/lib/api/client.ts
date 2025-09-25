@@ -18,9 +18,10 @@ import {
   STORAGE_KEYS 
 } from './config';
 
-// Token management utilities
+// Token management utilities - SSR safe
 export const tokenManager = {
   getTokens: () => {
+    if (typeof window === 'undefined') return null;
     try {
       const tokens = localStorage.getItem(STORAGE_KEYS.AUTH_TOKENS);
       return tokens ? JSON.parse(tokens) : null;
@@ -30,6 +31,7 @@ export const tokenManager = {
   },
 
   setTokens: (tokens: { accessToken: string; refreshToken: string } | null) => {
+    if (typeof window === 'undefined') return;
     if (tokens) {
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(tokens));
     } else {
@@ -38,6 +40,7 @@ export const tokenManager = {
   },
 
   getUser: () => {
+    if (typeof window === 'undefined') return null;
     try {
       const user = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
       return user ? JSON.parse(user) : null;
@@ -47,6 +50,7 @@ export const tokenManager = {
   },
 
   setUser: (user: any) => {
+    if (typeof window === 'undefined') return;
     if (user) {
       localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
     } else {
@@ -55,6 +59,7 @@ export const tokenManager = {
   },
 
   clearAll: () => {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKENS);
     localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
   }
@@ -123,7 +128,7 @@ export class ApiClient {
 
   constructor(config?: Partial<ApiClientConfig>) {
     this.config = {
-      baseURL: API_CONFIG.BASE_URL,
+      baseURL: API_CONFIG.BASE_URL || 'http://localhost:3001',
       timeout: API_CONFIG.TIMEOUT,
       retries: API_CONFIG.RETRY_ATTEMPTS,
       headers: DEFAULT_HEADERS,

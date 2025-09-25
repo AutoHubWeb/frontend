@@ -1,6 +1,6 @@
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL,
-  AUTH_SERVICE_URL: import.meta.env.VITE_AUTH_SERVICE_URL ,
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001',
+  AUTH_SERVICE_URL: process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:3001',
   TIMEOUT: 30000, // 30 seconds
   RETRY_ATTEMPTS: 3,
 } as const;
@@ -143,9 +143,9 @@ export const DEFAULT_HEADERS = {
 
 // Environment-specific configurations
 export const ENV_CONFIG = {
-  isDevelopment: import.meta.env.DEV,
-  isProduction: import.meta.env.PROD,
+  isDevelopment: process.env.NODE_ENV === 'development',
+  isProduction: process.env.NODE_ENV === 'production',
   apiBaseUrl: API_CONFIG.BASE_URL,
-  enableLogging: import.meta.env.VITE_DEBUG === 'true' || import.meta.env.DEV,
-  enableMocking: import.meta.env.VITE_ENABLE_MOCKING === 'true',
+  enableLogging: process.env.NEXT_PUBLIC_DEBUG === 'true' || process.env.NODE_ENV === 'development',
+  enableMocking: process.env.NEXT_PUBLIC_ENABLE_MOCKING === 'true',
 } as const;

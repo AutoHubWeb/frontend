@@ -1,4 +1,7 @@
-import { useParams, Link } from "wouter";
+'use client'
+
+import { useParams } from "next/navigation"
+import Link from "next/link";
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

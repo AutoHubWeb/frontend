@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from "react";
 import { Layout } from "@/components";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +13,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { User, Lock, Save, Edit } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+import Link from "next/link";
 
 export default function Profile() {
   const { user, isAuthenticated } = useAuth();

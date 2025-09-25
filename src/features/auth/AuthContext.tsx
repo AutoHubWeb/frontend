@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+'use client'
+
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { 
   useLogin, 
@@ -86,9 +88,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const changePasswordMutation = useChangePassword();
 
   // Logout function
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await logoutMutation.mutateAsync();
-  };
+  }, [logoutMutation]);
 
   // Refresh token function
   const handleRefreshToken = async (): Promise<boolean> => {
@@ -128,7 +130,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     initAuth();
-  }, []);
+  }, [handleLogout]);
 
   const contextValue: AuthContextType = {
     user,
