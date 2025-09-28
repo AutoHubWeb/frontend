@@ -59,7 +59,10 @@ export interface User {
   fullname: string;
   email: string;
   phone?: string;
-  balance?: number;
+  role?: number;
+  isLocked?: number;
+  accountBalance?: number;
+  balance?: number; // Alias for accountBalance for backward compatibility
   isAdmin?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -98,15 +101,34 @@ export interface RefreshTokenResponse {
 }
 
 // Tool types
+export interface ToolPlan {
+  name: string;
+  price: number;
+  duration: number; // duration in months, -1 for lifetime
+}
+
+export interface ToolImage {
+  id: string;
+  fileUrl: string;
+}
+
 export interface Tool {
   id: string;
+  code: string;
   name: string;
   description: string;
-  price: number;
-  prices?: any[]; // Array of pricing options
+  slug: string;
+  demo?: string;
+  images: ToolImage[];
+  plans: ToolPlan[];
+  soldQuantity: number;
+  viewCount: number;
+  status: number;
   category?: Category;
   categoryId?: string;
-  image?: string;
+  // Legacy fields for backward compatibility
+  price?: number;
+  prices?: any[];
   imageUrl?: string;
   videoUrl?: string;
   instructions?: string;
@@ -199,6 +221,39 @@ export interface UpdateProfileRequest {
 export interface ChangePasswordRequest {
   oldPassword: string;
   newPassword: string;
+}
+
+// User Management types (admin)
+export interface CreateUserRequest {
+  fullname: string;
+  email: string;
+  password: string;
+  phone?: string;
+  role?: number;
+}
+
+export interface UpdateUserRequest {
+  fullname?: string;
+  email?: string;
+  phone?: string;
+  role?: number;
+}
+
+export interface UpdateBalanceRequest {
+  amount: number;
+  operation: 1 | -1; // 1 for add, -1 for subtract
+  reason: string;
+}
+
+export interface ResetPasswordRequest {
+  password: string;
+}
+
+export interface UserFilters {
+  filter?: Array<{ column: string; text: string }>;
+  keyword?: string;
+  page?: number;
+  limit?: number;
 }
 
 // Admin types

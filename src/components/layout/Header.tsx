@@ -4,9 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/app/providers";
-import { useAuth } from "@/features/auth";
+import { useAuth, useLogout } from "@/features/auth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { Moon, Sun, Menu, User, Send, Wrench, Server, LogOut } from "lucide-react";
 import {
   DropdownMenu,
@@ -25,26 +24,27 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const logoutMutation = useLogout();
 
   const handleLogout = async () => {
-    try {
-      const response = await apiRequest("POST", "/api/auth/demo-logout");
-
-      if (response.ok) {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
         toast({
           title: "Đăng xuất thành công",
           description: "Hẹn gặp lại bạn!",
         });
-        window.location.reload();
-      } else {
-        // Fallback to original logout for non-demo users
-        window.location.href = "https://shopnro.hitly.click/api/logout";
+        // Redirect to home page after logout
+        window.location.href = "/";
+      },
+      onError: (error) => {
+        console.error("Logout error:", error);
+        toast({
+          title: "Lỗi đăng xuất",
+          description: "Có lỗi xảy ra khi đăng xuất",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Fallback to original logout
-      window.location.href = "https://shopnro.hitly.click/api/logout";
-    }
+    });
   };
 
   const navigation = [

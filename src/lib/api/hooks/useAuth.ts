@@ -74,22 +74,14 @@ export const useRegister = (options?: MutationConfig) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userData: RegisterRequest): Promise<RegisterResponse> => {
+    mutationFn: async (userData: RegisterRequest): Promise<{ message: string }> => {
       const response = await authService.register(userData);
-      return response.data!;
+      // Registration returns just a success message, not tokens
+      return { message: response.message || 'Đăng ký thành công' };
     },
     onSuccess: (data, variables, context) => {
-      // Store tokens and user data
-      tokenManager.setTokens({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-      });
-      tokenManager.setUser(data.user);
-
-      // Update React Query cache
-      queryClient.setQueryData(QUERY_KEYS.AUTH.USER, data.user);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER });
-
+      // Registration successful - don't store tokens since backend doesn't return them
+      // User needs to login separately after registration
       options?.onSuccess?.(data);
     },
     onError: (error, variables, context) => {
@@ -106,15 +98,12 @@ export const useLogout = (options?: MutationConfig) => {
 
   return useMutation({
     mutationFn: async (): Promise<void> => {
-      try {
-        await authService.logout();
-      } catch (error) {
-        // Continue with logout even if API call fails
-        console.warn('Logout API call failed:', error);
-      }
+      // Frontend logout - no API call needed
+      // Just clear all local data
+      return Promise.resolve();
     },
     onSuccess: (data, variables, context) => {
-      // Clear tokens and user data
+      // Clear tokens and user data from localStorage
       tokenManager.clearAll();
 
       // Clear React Query cache

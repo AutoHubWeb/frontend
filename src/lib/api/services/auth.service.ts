@@ -34,31 +34,24 @@ export class AuthService {
   }
 
   /**
-   * Logout current user
-   */
-  async logout(): Promise<ApiResponse<void>> {
-    return apiClient.post<void>(API_ENDPOINTS.AUTH.LOGOUT);
-  }
-
-  /**
    * Refresh authentication tokens
    */
   async refreshToken(refreshTokenData: RefreshTokenRequest): Promise<ApiResponse<RefreshTokenResponse>> {
-    return apiClient.post<RefreshTokenResponse>(API_ENDPOINTS.AUTH.REFRESH_TOKEN, refreshTokenData);
+    return apiClient.post<RefreshTokenResponse>(API_ENDPOINTS.AUTH.REFRESH_TOKENS, refreshTokenData);
   }
 
   /**
    * Get current user profile
    */
   async getCurrentUser(): Promise<ApiResponse<User>> {
-    return apiClient.get<User>(API_ENDPOINTS.AUTH.USER);
+    return apiClient.get<User>(API_ENDPOINTS.AUTH.ME);
   }
 
   /**
    * Update user profile
    */
   async updateProfile(profileData: UpdateProfileRequest): Promise<ApiResponse<User>> {
-    return apiClient.put<User>(API_ENDPOINTS.AUTH.PROFILE, profileData);
+    return apiClient.put<User>(API_ENDPOINTS.AUTH.UPDATE_ME, profileData);
   }
 
   /**
@@ -69,24 +62,24 @@ export class AuthService {
   }
 
   /**
-   * Verify user token
+   * Request password reset (forgot password)
    */
-  async verifyToken(): Promise<ApiResponse<{ valid: boolean }>> {
-    return apiClient.get<{ valid: boolean }>('/api/auth/verify');
+  async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
+    return apiClient.post<void>(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
   }
 
   /**
-   * Request password reset
+   * Verify authentication token
    */
-  async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
-    return apiClient.post<void>('/api/auth/forgot-password', { email });
+  async verifyToken(): Promise<ApiResponse<{ valid: boolean; user?: User }>> {
+    return apiClient.get<{ valid: boolean; user?: User }>('/api/v1/auth/verify');
   }
 
   /**
    * Reset password with token
    */
   async resetPassword(token: string, newPassword: string): Promise<ApiResponse<void>> {
-    return apiClient.post<void>('/api/auth/reset-password', { token, newPassword });
+    return apiClient.post<void>('/api/v1/auth/reset-password', { token, newPassword });
   }
 }
 

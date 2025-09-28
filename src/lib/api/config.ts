@@ -5,60 +5,79 @@ export const API_CONFIG = {
   RETRY_ATTEMPTS: 3,
 } as const;
 
-// API Endpoints
+// API Endpoints based on Postman collection
 export const API_ENDPOINTS = {
   // Authentication endpoints
   AUTH: {
     LOGIN: '/api/v1/auth/login',
     REGISTER: '/api/v1/auth/register',
-    LOGOUT: '/api/v1/auth/logout',
-    REFRESH_TOKEN: '/api/v1/auth/refresh-token',
-    USER: '/api/v1/auth/user',
-    PROFILE: '/api/v1/auth/profile',
+    ME: '/api/v1/auth/me', // Get current user profile
+    UPDATE_ME: '/api/v1/auth/me', // Update current user profile
     CHANGE_PASSWORD: '/api/v1/auth/change-password',
+    FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
+    REFRESH_TOKENS: '/api/v1/auth/refresh-tokens',
+  },
+  
+  // User management endpoints (admin)
+  USERS: {
+    BASE: '/api/v1/users',
+    BY_ID: (id: string) => `/api/v1/users/${id}`,
+    LOCK: (id: string) => `/api/v1/users/${id}/lock`,
+    UNLOCK: (id: string) => `/api/v1/users/${id}/unlock`,
+    UPDATE_BALANCE: (id: string) => `/api/v1/users/${id}/balance`,
+    RESET_PASSWORD: (id: string) => `/api/v1/users/${id}/reset-password`,
   },
   
   // Tools endpoints
   TOOLS: {
     BASE: '/api/v1/tools',
     BY_ID: (id: string) => `/api/v1/tools/${id}`,
+    ADMIN: '/api/v1/tools/admin', // Admin view of tools
+    ACTIVE: (id: string) => `/api/v1/tools/${id}/active`,
+    PAUSE: (id: string) => `/api/v1/tools/${id}/pause`,
     CATEGORIES: '/api/v1/tools/categories',
   },
   
-  // Purchases endpoints
+  // File management endpoints
+  FILES: {
+    UPLOAD_SINGLE: '/api/v1/files/upload/single',
+    UPLOAD_MULTIPLE: '/api/v1/files/upload/multiple',
+    STATIC: (resource: string, filename: string) => `/api/v1/files/static/${resource}/${filename}`,
+    DELETE: (id: string) => `/api/v1/files/${id}`,
+    DELETE_MULTIPLE: '/api/v1/files/delete-multiple',
+  },
+  
+  // Legacy endpoints (keeping for compatibility)
   PURCHASES: {
     BASE: '/api/v1/purchases',
     BY_ID: (id: string) => `/api/v1/purchases/${id}`,
     CHANGE_KEY: (id: string) => `/api/v1/purchases/${id}/key`,
   },
   
-  // Payment endpoints
   PAYMENTS: {
     BASE: '/api/v1/payments',
     DEPOSIT: '/api/v1/deposit',
     HISTORY: '/api/v1/payments/history',
   },
   
-  // Discount codes endpoints
   DISCOUNT_CODES: {
     VALIDATE: '/api/v1/discount-codes/validate',
     BASE: '/api/v1/discount-codes',
   },
   
-  // User endpoints
-  USER: {
-    PROFILE: '/api/v1/user/profile',
-    PASSWORD: '/api/v1/user/password',
-    SETTINGS: '/api/v1/user/settings',
-  },
-  
   // Admin endpoints
   ADMIN: {
+    STATISTICS: '/api/v1/admin/statistics',
+    REVENUE: '/api/v1/admin/revenue',
+    USER_ACTIVITY: '/api/v1/admin/user-activity',
     USERS: '/api/v1/admin/users',
     TOOLS: '/api/v1/admin/tools',
     CATEGORIES: '/api/v1/admin/categories',
     VALIDATIONS: '/api/v1/admin/validations',
-    STATISTICS: '/api/v1/admin/statistics',
+    LOGS: '/api/v1/admin/logs',
+    EXPORT: '/api/v1/admin/export',
+    IMPORT: '/api/v1/admin/import',
+    SETTINGS: '/api/v1/admin/settings',
   },
 } as const;
 
@@ -99,12 +118,24 @@ export const STORAGE_KEYS = {
 export const QUERY_KEYS = {
   AUTH: {
     USER: ['auth', 'user'] as const,
+    ME: ['auth', 'me'] as const,
     TOKENS: ['auth', 'tokens'] as const,
+  },
+  USERS: {
+    ALL: ['users'] as const,
+    BY_ID: (id: string) => ['users', id] as const,
+    LIST: (filters?: any) => ['users', 'list', filters] as const,
   },
   TOOLS: {
     ALL: ['tools'] as const,
     BY_ID: (id: string) => ['tools', id] as const,
-    CATEGORIES: ['tools', 'categories'] as const,
+    ADMIN: ['tools', 'admin'] as const,
+    LIST: (filters?: any) => ['tools', 'list', filters] as const,
+  },
+  FILES: {
+    ALL: ['files'] as const,
+    BY_ID: (id: string) => ['files', id] as const,
+    BY_RESOURCE: (resource: string) => ['files', 'resource', resource] as const,
   },
   PURCHASES: {
     ALL: ['purchases'] as const,
@@ -114,12 +145,6 @@ export const QUERY_KEYS = {
   PAYMENTS: {
     ALL: ['payments'] as const,
     HISTORY: ['payments', 'history'] as const,
-  },
-  ADMIN: {
-    USERS: ['admin', 'users'] as const,
-    TOOLS: ['admin', 'tools'] as const,
-    STATISTICS: ['admin', 'statistics'] as const,
-    VALIDATIONS: ['admin', 'validations'] as const,
   },
 } as const;
 

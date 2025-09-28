@@ -75,10 +75,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   };
 
   const handleForgotPassword = () => {
-    toast({
-      title: "Tính năng sắp ra mắt",
-      description: "Chức năng quên mật khẩu đang được phát triển",
-    });
+    router.push("/forgot-password");
   };
 
   const handleRegister = () => {
@@ -182,7 +179,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
                 onClick={handleForgotPassword}
                 data-testid="forgot-password-link"
               >
-                Quên/Đổi Mật Khẩu?
+                Quên Mật Khẩu?
               </Button>
             </div>
 

@@ -7,11 +7,13 @@
 export { 
   useTools, 
   useToolById, 
+  useToolsAdmin,
   useToolCategories,
   useSearchTools,
   useFeaturedTools,
   usePopularTools,
   useRecommendedTools,
+  useInfiniteTools,
   usePrefetchTool
 } from '@/lib/api/hooks/useTools';
 

@@ -6,7 +6,7 @@ import { ToolCard } from "@/features/tools";
 import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth";
 import { useToast } from "@/hooks/use-toast";
-import { mockTools, mockCategories } from "@/lib/mockData";
+import { useTools } from "@/lib/api/hooks/useTools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,6 +26,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import type { Tool } from "@/lib/api/types";
 
 export default function Tools() {
   const { isAuthenticated } = useAuth();
@@ -34,12 +35,37 @@ export default function Tools() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<typeof mockTools[0] | null>(null);
+  const [selectedTool, setSelectedTool] = useState<any | null>(null);
 
-  // Use mock data instead of API calls
-  const tools = mockTools;
-  const categories = mockCategories;
-  const toolsLoading = false;
+  // Use real API calls instead of mock data
+  const { data: toolsResponse, isLoading: toolsLoading, error: toolsError } = useTools();
+  
+  // Transform API tools to format expected by ToolCard component
+  const transformTool = (apiTool: Tool) => {
+    const transformedTool = {
+      id: apiTool.id,
+      name: apiTool.name,
+      description: apiTool.description,
+      price: apiTool.plans?.[0]?.price?.toString() || "0",
+      prices: apiTool.plans?.map(plan => ({
+        duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} tháng`,
+        amount: plan.price.toString()
+      })) || [],
+      imageUrl: apiTool.images?.[0]?.fileUrl 
+        ? `/static/tool/${apiTool.images[0].fileUrl.split('/').pop()}` 
+        : "/static/tool/default.jpg",
+      views: apiTool.viewCount || 0,
+      purchases: apiTool.soldQuantity || 0,
+      categoryId: apiTool.categoryId
+    };
+    return transformedTool;
+  };
+  
+  // Extract and transform tools from API response
+  // Hook returns response.data which should be { items: [...], meta: {...} }
+  const rawTools: Tool[] = (toolsResponse as any)?.items || [];
+  const tools = rawTools.map(transformTool);
+  const categories: any[] = []; // Categories will be handled separately
   const categoriesLoading = false;
 
   // Mock purchase function - no actual payment processing

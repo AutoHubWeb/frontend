@@ -14,6 +14,9 @@ export interface ExternalUser {
   lastName?: string;
   profileImageUrl?: string;
   phone?: string;
+  role?: number;
+  isLocked?: number;
+  accountBalance?: number;
   balance?: number;
   isAdmin?: boolean;
   createdAt?: string;

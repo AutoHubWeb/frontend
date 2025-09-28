@@ -6,7 +6,8 @@ import { ToolCard } from "@/features/tools";
 import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth";
 import { useToast } from "@/hooks/use-toast";
-import { mockTools, mockCategories, mockVPS } from "@/lib/mockData";
+import { useTools } from "@/lib/api/hooks/useTools";
+import { mockVPS } from "@/lib/mockData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,15 +51,40 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<typeof mockTools[0] | null>(null);
+  const [selectedTool, setSelectedTool] = useState<any | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [selectedMonths, setSelectedMonths] = useState<string>("1");
 
-  // Use mock data instead of API calls
-  const tools = mockTools;
-  const categories = mockCategories;
-  const toolsLoading = false;
+  // Use real API calls for tools, keep mock data for VPS
+  const { data: toolsResponse, isLoading: toolsLoading, error: toolsError } = useTools();
+  
+  // Transform API tools to format expected by ToolCard component
+  const transformTool = (apiTool: Tool) => {
+    const transformedTool = {
+      id: apiTool.id,
+      name: apiTool.name,
+      description: apiTool.description,
+      price: apiTool.plans?.[0]?.price?.toString() || "0",
+      prices: apiTool.plans?.map(plan => ({
+        duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} tháng`,
+        amount: plan.price.toString()
+      })) || [],
+      imageUrl: apiTool.images?.[0]?.fileUrl 
+        ? `/static/tool/${apiTool.images[0].fileUrl.split('/').pop()}` 
+        : "/static/tool/default.jpg",
+      views: apiTool.viewCount || 0,
+      purchases: apiTool.soldQuantity || 0,
+      categoryId: apiTool.categoryId
+    };
+    return transformedTool;
+  };
+  
+  // Extract and transform tools from API response
+  // Hook returns response.data which should be { items: [...], meta: {...} }
+  const rawTools: Tool[] = (toolsResponse as any)?.items || [];
+  const tools = rawTools.map(transformTool);
+  const categories: any[] = []; // Categories will be handled separately
   const categoriesLoading = false;
 
   // Handle scroll to show/hide back to top button and calculate progress
@@ -104,13 +130,13 @@ export default function Home() {
   };
 
   // Filter tools and VPS based on search
-  const filteredTools = tools.filter(tool => {
+  const filteredTools = tools.filter((tool: any) => {
     const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          tool.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
-  const filteredVPS = mockVPS.filter(vps => {
+  const filteredVPS = mockVPS.filter((vps: any) => {
     const matchesSearch = vps.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          vps.specs.feature.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
@@ -126,7 +152,7 @@ export default function Home() {
       return;
     }
 
-    const tool = tools.find(t => t.id === toolId);
+    const tool = tools.find((t: any) => t.id === toolId);
     if (tool) {
       setSelectedTool(tool);
       setPurchaseDialogOpen(true);
@@ -225,7 +251,7 @@ export default function Home() {
               </div>
             ) : (searchQuery ? filteredTools : tools).length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {(searchQuery ? filteredTools : tools).map((tool, index) => (
+                {(searchQuery ? filteredTools : tools).map((tool: any, index: number) => (
                   <motion.div
                     key={tool.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -360,7 +386,7 @@ export default function Home() {
             
             {/* Single Proxy Display */}
             {(() => {
-              const proxyTool = tools.find(tool => tool.categoryId === "5");
+              const proxyTool = tools.find((tool: any) => tool.categoryId === "5");
               
               if (!proxyTool) {
                 return (

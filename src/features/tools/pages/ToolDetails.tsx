@@ -4,9 +4,10 @@ import { useParams } from "next/navigation"
 import Link from "next/link";
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useToolById } from "@/lib/api/hooks/useTools";
 import { isUnauthorizedError } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -46,9 +47,37 @@ export default function ToolDetails() {
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
 
-  const { data: tool, isLoading } = useQuery<Tool & { category?: Category }>({
-    queryKey: ["/api/tools", id],
-  });
+  // Use real API call with proper endpoint
+  const { data: toolResponse, isLoading, error } = useToolById(id || "");
+  
+  // Transform API tool to format expected by component
+  const transformTool = (apiTool: Tool) => {
+    if (!apiTool) return null;
+    
+    return {
+      id: apiTool.id,
+      name: apiTool.name,
+      description: apiTool.description,
+      price: apiTool.plans?.[0]?.price?.toString() || "0",
+      prices: apiTool.plans?.map(plan => ({
+        duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} tháng`,
+        amount: plan.price.toString()
+      })) || [],
+      imageUrl: apiTool.images?.[0]?.fileUrl 
+        ? `/static/tool/${apiTool.images[0].fileUrl.split('/').pop()}` 
+        : "/static/tool/default.jpg",
+      videoUrl: apiTool.demo || "",
+      instructions: "Hướng dẫn sử dụng công cụ sẽ được cung cấp sau khi mua.",
+      views: apiTool.viewCount || 0,
+      purchases: apiTool.soldQuantity || 0,
+      rating: 4.5, // Default rating
+      reviewCount: 0, // Default review count
+      categoryId: apiTool.categoryId,
+      category: apiTool.category
+    };
+  };
+  
+  const tool: any = toolResponse ? transformTool(toolResponse) : null;
 
   const purchaseMutation = useMutation({
     mutationFn: async ({ toolId, discountCodeId }: { toolId: string; discountCodeId?: string }) => {
@@ -159,6 +188,26 @@ export default function ToolDetails() {
                 </CardContent>
               </Card>
             </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-16">
+            <h1 className="text-2xl font-bold mb-4">Lỗi tải dữ liệu</h1>
+            <p className="text-muted-foreground mb-6">Không thể tải thông tin công cụ. Vui lòng thử lại sau.</p>
+            <Link href="/">
+              <Button data-testid="button-back-to-home">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Quay lại trang chủ
+              </Button>
+            </Link>
           </div>
         </div>
       </Layout>

@@ -1,211 +1,120 @@
 /**
  * Admin React Query Hooks
  * Custom hooks for admin-related API operations
+ * Note: Placeholder implementation - will be integrated with actual admin endpoints
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { adminService } from '../services';
+import { userService } from '../services';
 import { QUERY_KEYS } from '../config';
 import { 
-  User, 
-  Tool, 
-  Category,
-  AdminStatistics, 
+  User,
+  AdminStatistics,
   KeyValidation,
   PaginatedResponse, 
   PaginationParams,
   QueryConfig,
-  MutationConfig 
+  MutationConfig,
+  UserFilters,
+  CreateUserRequest,
+  UpdateUserRequest,
+  UpdateBalanceRequest,
+  ResetPasswordRequest
 } from '../types';
 import { parseApiError } from '../errors';
 
-// Query hooks - Statistics
-export const useAdminStatistics = (options?: QueryConfig) => {
-  return useQuery({
-    queryKey: QUERY_KEYS.ADMIN.STATISTICS,
-    queryFn: async () => {
-      const response = await adminService.getStatistics();
-      return response.data;
-    },
-    staleTime: options?.staleTime ?? 2 * 60 * 1000, // 2 minutes
-    cacheTime: options?.cacheTime ?? 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
-  });
-};
-
-export const useRevenueStatistics = (period?: 'day' | 'week' | 'month' | 'year', options?: QueryConfig) => {
-  return useQuery({
-    queryKey: ['admin', 'revenue', period],
-    queryFn: async () => {
-      const response = await adminService.getRevenueStatistics(period);
-      return response.data;
-    },
-    staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
-    cacheTime: options?.cacheTime ?? 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
-  });
-};
-
-export const useUserActivityStatistics = (options?: QueryConfig) => {
-  return useQuery({
-    queryKey: ['admin', 'user-activity'],
-    queryFn: async () => {
-      const response = await adminService.getUserActivityStatistics();
-      return response.data;
-    },
-    staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
-    cacheTime: options?.cacheTime ?? 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
-  });
-};
-
-// Query hooks - Users Management
+// User management hooks (using the new userService)
 export const useAdminUsers = (
-  params?: PaginationParams,
+  filters?: UserFilters,
   options?: QueryConfig
 ) => {
   return useQuery({
-    queryKey: [...QUERY_KEYS.ADMIN.USERS, params],
+    queryKey: [...QUERY_KEYS.USERS.LIST(filters)],
     queryFn: async () => {
-      const response = await adminService.getUsers(params);
+      const response = await userService.getUsers(filters);
       return response.data;
     },
     staleTime: options?.staleTime ?? 2 * 60 * 1000, // 2 minutes
-    cacheTime: options?.cacheTime ?? 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
     ...options,
   });
 };
 
-export const useAdminUserById = (id: string, options?: QueryConfig) => {
-  return useQuery({
-    queryKey: ['admin', 'users', id],
-    queryFn: async () => {
-      const response = await adminService.getUserById(id);
-      return response.data;
+export const useCreateUser = (options?: MutationConfig) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userData: CreateUserRequest): Promise<User> => {
+      const response = await userService.createUser(userData);
+      return response.data!;
     },
-    enabled: options?.enabled ?? !!id,
-    staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
-    cacheTime: options?.cacheTime ?? 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
-  });
-};
-
-// Query hooks - Tools Management
-export const useAdminTools = (
-  params?: PaginationParams,
-  options?: QueryConfig
-) => {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.ADMIN.TOOLS, params],
-    queryFn: async () => {
-      const response = await adminService.getTools(params);
-      return response.data;
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.ALL });
+      options?.onSuccess?.(data);
     },
-    staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
-    cacheTime: options?.cacheTime ?? 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
-  });
-};
-
-export const useAdminCategories = (
-  params?: PaginationParams,
-  options?: QueryConfig
-) => {
-  return useQuery({
-    queryKey: ['admin', 'categories', params],
-    queryFn: async () => {
-      const response = await adminService.getCategories(params);
-      return response.data;
+    onError: (error, variables, context) => {
+      const apiError = parseApiError(error);
+      options?.onError?.(apiError);
     },
-    staleTime: options?.staleTime ?? 10 * 60 * 1000, // 10 minutes
-    cacheTime: options?.cacheTime ?? 20 * 60 * 1000, // 20 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
+    onSettled: options?.onSettled,
+    retry: options?.retry ?? false,
   });
 };
 
-// Query hooks - Key Validations
-export const useKeyValidations = (
-  params?: PaginationParams,
-  options?: QueryConfig
-) => {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.ADMIN.VALIDATIONS, params],
-    queryFn: async () => {
-      const response = await adminService.getKeyValidations(params);
-      return response.data;
-    },
-    staleTime: options?.staleTime ?? 1 * 60 * 1000, // 1 minute
-    cacheTime: options?.cacheTime ?? 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
-  });
-};
-
-// Query hooks - System
-export const useSystemLogs = (
-  params?: PaginationParams & { level?: string; module?: string },
-  options?: QueryConfig
-) => {
-  return useQuery({
-    queryKey: ['admin', 'logs', params],
-    queryFn: async () => {
-      const response = await adminService.getSystemLogs(params);
-      return response.data;
-    },
-    staleTime: options?.staleTime ?? 30 * 1000, // 30 seconds
-    cacheTime: options?.cacheTime ?? 2 * 60 * 1000, // 2 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
-  });
-};
-
-export const useSystemSettings = (options?: QueryConfig) => {
-  return useQuery({
-    queryKey: ['admin', 'settings'],
-    queryFn: async () => {
-      const response = await adminService.getSystemSettings();
-      return response.data;
-    },
-    staleTime: options?.staleTime ?? 10 * 60 * 1000, // 10 minutes
-    cacheTime: options?.cacheTime ?? 20 * 60 * 1000, // 20 minutes
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    retry: options?.retry ?? 1,
-    ...options,
-  });
-};
-
-// Mutation hooks - User Management
 export const useUpdateUser = (options?: MutationConfig) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, userData }: { id: string; userData: Partial<User> }): Promise<User> => {
-      const response = await adminService.updateUser(id, userData);
+    mutationFn: async ({ userId, userData }: { userId: string; userData: UpdateUserRequest }): Promise<User> => {
+      const response = await userService.updateUser(userId, userData);
       return response.data!;
     },
     onSuccess: (data, variables, context) => {
-      // Update user in cache
-      queryClient.setQueryData(['admin', 'users', variables.id], data);
-      
-      // Invalidate user lists
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.USERS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.BY_ID(variables.userId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.ALL });
+      options?.onSuccess?.(data);
+    },
+    onError: (error, variables, context) => {
+      const apiError = parseApiError(error);
+      options?.onError?.(apiError);
+    },
+    onSettled: options?.onSettled,
+    retry: options?.retry ?? false,
+  });
+};
 
+export const useLockUser = (options?: MutationConfig) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await userService.lockUser(userId);
+      return response.data;
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.BY_ID(variables) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.ALL });
+      options?.onSuccess?.(data);
+    },
+    onError: (error, variables, context) => {
+      const apiError = parseApiError(error);
+      options?.onError?.(apiError);
+    },
+    onSettled: options?.onSettled,
+    retry: options?.retry ?? false,
+  });
+};
+
+export const useUnlockUser = (options?: MutationConfig) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await userService.unlockUser(userId);
+      return response.data;
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.BY_ID(variables) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.ALL });
       options?.onSuccess?.(data);
     },
     onError: (error, variables, context) => {
@@ -221,18 +130,13 @@ export const useDeleteUser = (options?: MutationConfig) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const response = await adminService.deleteUser(id);
+    mutationFn: async (userId: string) => {
+      const response = await userService.deleteUser(userId);
       return response.data;
     },
     onSuccess: (data, variables, context) => {
-      // Remove user from cache
-      queryClient.removeQueries({ queryKey: ['admin', 'users', variables] });
-      
-      // Invalidate user lists and statistics
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.USERS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.STATISTICS });
-
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.ALL });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.USERS.BY_ID(variables) });
       options?.onSuccess?.(data);
     },
     onError: (error, variables, context) => {
@@ -244,19 +148,17 @@ export const useDeleteUser = (options?: MutationConfig) => {
   });
 };
 
-export const useBanUser = (options?: MutationConfig) => {
+export const useUpdateUserBalance = (options?: MutationConfig) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, reason }: { id: string; reason?: string }): Promise<void> => {
-      const response = await adminService.banUser(id, reason);
+    mutationFn: async ({ userId, balanceData }: { userId: string; balanceData: UpdateBalanceRequest }) => {
+      const response = await userService.updateUserBalance(userId, balanceData);
       return response.data;
     },
     onSuccess: (data, variables, context) => {
-      // Invalidate user queries
-      queryClient.invalidateQueries({ queryKey: ['admin', 'users', variables.id] });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.USERS });
-
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.BY_ID(variables.userId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USERS.ALL });
       options?.onSuccess?.(data);
     },
     onError: (error, variables, context) => {
@@ -268,19 +170,15 @@ export const useBanUser = (options?: MutationConfig) => {
   });
 };
 
-export const useUnbanUser = (options?: MutationConfig) => {
+export const useResetUserPassword = (options?: MutationConfig) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const response = await adminService.unbanUser(id);
+    mutationFn: async ({ userId, passwordData }: { userId: string; passwordData: ResetPasswordRequest }) => {
+      const response = await userService.resetUserPassword(userId, passwordData);
       return response.data;
     },
     onSuccess: (data, variables, context) => {
-      // Invalidate user queries
-      queryClient.invalidateQueries({ queryKey: ['admin', 'users', variables] });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.USERS });
-
       options?.onSuccess?.(data);
     },
     onError: (error, variables, context) => {
@@ -292,254 +190,70 @@ export const useUnbanUser = (options?: MutationConfig) => {
   });
 };
 
-// Mutation hooks - Tools Management
-export const useCreateTool = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (toolData: Partial<Tool>): Promise<Tool> => {
-      const response = await adminService.createTool(toolData);
-      return response.data!;
+// Placeholder hooks for other admin functionality
+export const useAdminStatistics = (options?: QueryConfig) => {
+  return useQuery({
+    queryKey: ['admin', 'statistics'],
+    queryFn: async () => {
+      // Placeholder implementation
+      return {
+        totalUsers: 0,
+        totalTools: 0,
+        totalPurchases: 0,
+        totalRevenue: 0,
+        recentUsers: [],
+        recentPurchases: [],
+      } as AdminStatistics;
     },
-    onSuccess: (data, variables, context) => {
-      // Invalidate tool queries
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.TOOLS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TOOLS.ALL });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.STATISTICS });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
+    staleTime: options?.staleTime ?? 5 * 60 * 1000,
+    ...options,
   });
 };
 
-export const useUpdateTool = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, toolData }: { id: string; toolData: Partial<Tool> }): Promise<Tool> => {
-      const response = await adminService.updateTool(id, toolData);
-      return response.data!;
+export const useKeyValidations = (options?: QueryConfig) => {
+  return useQuery({
+    queryKey: ['admin', 'validations'],
+    queryFn: async () => {
+      // Placeholder implementation
+      return [] as KeyValidation[];
     },
-    onSuccess: (data, variables, context) => {
-      // Update tool in cache
-      queryClient.setQueryData(QUERY_KEYS.TOOLS.BY_ID(variables.id), data);
-      
-      // Invalidate tool lists
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.TOOLS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TOOLS.ALL });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
+    staleTime: options?.staleTime ?? 2 * 60 * 1000,
+    ...options,
   });
 };
 
-export const useDeleteTool = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const response = await adminService.deleteTool(id);
-      return response.data;
+// Additional placeholder hooks for legacy compatibility
+export const useRevenueStatistics = (options?: QueryConfig) => {
+  return useQuery({
+    queryKey: ['admin', 'revenue', 'statistics'],
+    queryFn: async () => {
+      return { totalRevenue: 0, monthlyRevenue: [], revenueGrowth: 0 };
     },
-    onSuccess: (data, variables, context) => {
-      // Remove tool from cache
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.TOOLS.BY_ID(variables) });
-      
-      // Invalidate tool lists and statistics
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.TOOLS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TOOLS.ALL });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.STATISTICS });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
+    staleTime: options?.staleTime ?? 5 * 60 * 1000,
+    ...options,
   });
 };
 
-// Mutation hooks - Categories Management
-export const useCreateCategory = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (categoryData: Partial<Category>): Promise<Category> => {
-      const response = await adminService.createCategory(categoryData);
-      return response.data!;
+export const useUserActivityStatistics = (options?: QueryConfig) => {
+  return useQuery({
+    queryKey: ['admin', 'user', 'activity'],
+    queryFn: async () => {
+      return { activeUsers: 0, newUsers: 0, userGrowth: 0 };
     },
-    onSuccess: (data, variables, context) => {
-      // Invalidate category queries
-      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TOOLS.CATEGORIES });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
+    staleTime: options?.staleTime ?? 2 * 60 * 1000,
+    ...options,
   });
 };
 
-export const useUpdateCategory = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, categoryData }: { id: string; categoryData: Partial<Category> }): Promise<Category> => {
-      const response = await adminService.updateCategory(id, categoryData);
-      return response.data!;
+export const useAdminUserById = (userId: string, options?: QueryConfig) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.USERS.BY_ID(userId),
+    queryFn: async () => {
+      // This would typically call userService.getUserById when implemented
+      return null;
     },
-    onSuccess: (data, variables, context) => {
-      // Invalidate category queries
-      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TOOLS.CATEGORIES });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
-  });
-};
-
-export const useDeleteCategory = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const response = await adminService.deleteCategory(id);
-      return response.data;
-    },
-    onSuccess: (data, variables, context) => {
-      // Invalidate category queries
-      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TOOLS.CATEGORIES });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
-  });
-};
-
-// Mutation hooks - System
-export const useCreateKeyValidation = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (validationData: Partial<KeyValidation>): Promise<KeyValidation> => {
-      const response = await adminService.createKeyValidation(validationData);
-      return response.data!;
-    },
-    onSuccess: (data, variables, context) => {
-      // Invalidate validation queries
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.VALIDATIONS });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
-  });
-};
-
-export const useUpdateSystemSettings = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (settings: Record<string, any>): Promise<void> => {
-      const response = await adminService.updateSystemSettings(settings);
-      return response.data;
-    },
-    onSuccess: (data, variables, context) => {
-      // Invalidate system settings query
-      queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
-  });
-};
-
-export const useExportData = (options?: MutationConfig) => {
-  return useMutation({
-    mutationFn: async ({ type, format }: { type: 'users' | 'tools' | 'purchases' | 'payments'; format: 'csv' | 'json' }) => {
-      const response = await adminService.exportData(type, format);
-      return response.data!;
-    },
-    onSuccess: (data, variables, context) => {
-      // Open download URL in new tab
-      window.open(data.downloadUrl, '_blank');
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
-  });
-};
-
-export const useImportData = (options?: MutationConfig) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ type, file }: { type: 'users' | 'tools'; file: File }) => {
-      const response = await adminService.importData(type, file);
-      return response.data!;
-    },
-    onSuccess: (data, variables, context) => {
-      // Invalidate relevant queries based on import type
-      if (variables.type === 'users') {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.USERS });
-      } else if (variables.type === 'tools') {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.TOOLS });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TOOLS.ALL });
-      }
-      
-      // Invalidate statistics
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADMIN.STATISTICS });
-
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
+    enabled: options?.enabled ?? !!userId,
+    staleTime: options?.staleTime ?? 5 * 60 * 1000,
+    ...options,
   });
 };

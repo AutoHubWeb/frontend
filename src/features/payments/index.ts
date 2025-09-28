@@ -17,7 +17,7 @@ export {
   useCancelPayment,
   useRefundPayment,
   useRetryPayment,
-  useDownloadPaymentReceipt,
+  useDownloadPaymentInvoice,
   useUpdatePaymentMethod
 } from '@/lib/api/hooks/usePayments';
 

@@ -56,9 +56,9 @@ export const usePrefetchCommonData = () => {
   const queryClient = useQueryClient();
 
   return () => {
-    // Prefetch tool categories
+    // Prefetch all tools
     queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.TOOLS.CATEGORIES,
+      queryKey: QUERY_KEYS.TOOLS.ALL,
       staleTime: 15 * 60 * 1000, // 15 minutes
     });
 

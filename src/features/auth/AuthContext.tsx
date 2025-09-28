@@ -9,6 +9,7 @@ import {
   useRefreshToken, 
   useUpdateProfile, 
   useChangePassword,
+  useCurrentUser,
   tokenManager
 } from '@/lib/api';
 import type { AuthContextType, LoginRequest, RegisterRequest, JWTTokens, ExternalUser } from '@shared/authTypes';
@@ -31,9 +32,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
+  // Use React Query to get the current user data
+  const { data: currentUser, isLoading: isUserLoading } = useCurrentUser({ enabled: true });
+
   // Initialize auth state from localStorage
   const [tokens, setTokensState] = useState<JWTTokens | null>(tokenManager.getTokens());
   const [user, setUserState] = useState<ExternalUser | null>(tokenManager.getUser());
+
+  // Update local user state when React Query data changes
+  useEffect(() => {
+    if (currentUser) {
+      setUserState(currentUser);
+      tokenManager.setUser(currentUser);
+    }
+  }, [currentUser]);
 
   // Use new API hooks
   const loginMutation = useLogin({
@@ -50,9 +62,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const registerMutation = useRegister({
     onSuccess: (data) => {
-      const newTokens = { accessToken: data.accessToken, refreshToken: data.refreshToken };
-      setTokensState(newTokens);
-      setUserState(data.user);
+      // Registration successful - just log success message
+      // User needs to login separately after registration
+      console.log('Registration successful:', data.message);
     },
     onError: (error) => {
       console.error('Register failed:', error);
@@ -130,7 +142,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     initAuth();
-  }, [handleLogout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const contextValue: AuthContextType = {
     user,
@@ -149,7 +162,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     changePassword: async (data: { oldPassword: string; newPassword: string }) => {
       await changePasswordMutation.mutateAsync(data);
     },
-    isLoading: isLoading || loginMutation.isPending || registerMutation.isPending,
+    isLoading: isLoading || isUserLoading || loginMutation.isPending || registerMutation.isPending,
     isAuthenticated: !!user && !!tokens,
   };
 
