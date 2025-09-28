@@ -88,6 +88,8 @@ export const HTTP_METHODS = {
   PUT: 'PUT',
   PATCH: 'PATCH',
   DELETE: 'DELETE',
+  HEAD: 'HEAD',
+  OPTIONS: 'OPTIONS',
 } as const;
 
 // HTTP Status Codes

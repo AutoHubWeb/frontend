@@ -20,7 +20,15 @@ import Link from "next/link";
 // Form validation schemas
 const profileUpdateSchema = z.object({
   fullname: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
-  phone: z.string().optional(),
+  phone: z.string().optional().refine(
+    (val) => {
+      if (val === undefined || val === "") return true; // Allow empty/undefined
+      return val.length >= 10; // If provided, must be at least 10 characters
+    },
+    {
+      message: "Số điện thoại phải có ít nhất 10 ký tự",
+    }
+  ),
 });
 
 const changePasswordSchema = z.object({
@@ -32,7 +40,9 @@ const changePasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-type ProfileUpdateData = z.infer<typeof profileUpdateSchema>;
+type ProfileUpdateData = z.infer<typeof profileUpdateSchema> & {
+  phone?: string; // Make phone explicitly optional to handle empty strings
+};
 type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
 export default function Profile() {
@@ -47,7 +57,7 @@ export default function Profile() {
     resolver: zodResolver(profileUpdateSchema),
     defaultValues: {
       fullname: user?.fullname || "",
-      phone: user?.phone || "",
+      phone: user?.phone || undefined, // Use undefined instead of empty string
     },
   });
 
@@ -65,7 +75,7 @@ export default function Profile() {
       // Reset form with updated user data
       form.reset({
         fullname: updatedUser.fullname || "",
-        phone: updatedUser.phone || "",
+        phone: updatedUser.phone || undefined, // Use undefined instead of empty string
       });
       // Manually refetch user data to ensure UI updates
       refetchUser();
@@ -76,9 +86,26 @@ export default function Profile() {
       setIsEditing(false);
     },
     onError: (error) => {
+      // Extract detailed error message if available
+      let errorMessage = error.message || "Có lỗi xảy ra khi cập nhật thông tin.";
+      
+      // Check if there are validation error details
+      if (error.details && typeof error.details === 'object') {
+        const validationErrors = error.details as Record<string, string[]>;
+        if (validationErrors.phone && validationErrors.phone.length > 0) {
+          errorMessage = validationErrors.phone[0]; // Use the first phone validation error
+        } else if (Object.keys(validationErrors).length > 0) {
+          // Use the first available validation error
+          const firstKey = Object.keys(validationErrors)[0];
+          if (validationErrors[firstKey] && validationErrors[firstKey].length > 0) {
+            errorMessage = validationErrors[firstKey][0];
+          }
+        }
+      }
+      
       toast({
         title: "Cập nhật thất bại",
-        description: error.message || "Có lỗi xảy ra khi cập nhật thông tin.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -107,7 +134,7 @@ export default function Profile() {
     if (user) {
       form.reset({
         fullname: user.fullname || "",
-        phone: user.phone || "",
+        phone: user.phone || undefined, // Use undefined instead of empty string
       });
     }
   }, [user, form]);
@@ -120,13 +147,18 @@ export default function Profile() {
       const updatedUser = updateProfileMutation.data;
       form.reset({
         fullname: updatedUser.fullname || "",
-        phone: updatedUser.phone || "",
+        phone: updatedUser.phone || undefined, // Use undefined instead of empty string
       });
     }
   }, [updateProfileMutation.isSuccess, updateProfileMutation.data, form]);
 
   const handleSubmit = (data: ProfileUpdateData) => {
-    updateProfileMutation.mutate(data);
+    // Filter out empty phone values to prevent validation errors
+    const filteredData = {
+      ...data,
+      phone: data.phone === "" ? undefined : data.phone
+    };
+    updateProfileMutation.mutate(filteredData);
   };
 
   const handlePasswordSubmit = (data: ChangePasswordData) => {
@@ -139,7 +171,7 @@ export default function Profile() {
   const handleCancel = () => {
     form.reset({
       fullname: user?.fullname || "",
-      phone: user?.phone || "",
+      phone: user?.phone || undefined, // Use undefined instead of empty string
     });
     setIsEditing(false);
   };
@@ -286,6 +318,9 @@ export default function Profile() {
                         disabled={updateProfileMutation.isPending}
                         className="border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       />
+                      {form.formState.errors.phone && (
+                        <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
+                      )}
                     </div>
 
                     <div className="flex gap-3 pt-4">

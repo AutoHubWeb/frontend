@@ -1,22 +1,20 @@
 /**
  * API Client
- * Core HTTP client with authentication, error handling, and interceptors
+ * Simplified HTTP client using fetch API
  */
 
 import { ApiRequestConfig, ApiResponse, ApiClientConfig, HttpMethod } from './types';
-import { 
-  ApiException, 
-  parseApiError, 
-  logError, 
-  shouldRetry, 
-  getRetryDelay 
-} from './errors';
 import { 
   API_CONFIG, 
   DEFAULT_HEADERS, 
   ENV_CONFIG,
   STORAGE_KEYS 
 } from './config';
+import { 
+  ApiException, 
+  parseApiError, 
+  logError
+} from './errors';
 
 // Token management utilities - SSR safe
 export const tokenManager = {
@@ -65,72 +63,14 @@ export const tokenManager = {
   }
 };
 
-// Request interceptors
-const requestInterceptors = {
-  // Add authentication token
-  addAuthToken: (config: ApiRequestConfig): ApiRequestConfig => {
-    if (config.withAuth !== false) {
-      const tokens = tokenManager.getTokens();
-      if (tokens?.accessToken) {
-        config.headers = {
-          ...config.headers,
-          Authorization: `Bearer ${tokens.accessToken}`,
-        };
-      }
-    }
-    return config;
-  },
-
-  // Add default headers
-  addDefaultHeaders: (config: ApiRequestConfig): ApiRequestConfig => {
-    config.headers = {
-      ...DEFAULT_HEADERS,
-      ...config.headers,
-    };
-    return config;
-  },
-
-  // Log requests in development
-  logRequest: (config: ApiRequestConfig): ApiRequestConfig => {
-    if (ENV_CONFIG.enableLogging) {
-      console.log(`📤 ${config.method} ${config.url}`, {
-        data: config.data,
-        params: config.params,
-        headers: config.headers,
-        baseURL: API_CONFIG.BASE_URL,
-      });
-    }
-    return config;
-  },
-};
-
-// Response interceptors
-const responseInterceptors = {
-  // Log responses in development
-  logResponse: <T>(response: ApiResponse<T>, config: ApiRequestConfig): ApiResponse<T> => {
-    if (ENV_CONFIG.enableLogging) {
-      console.log(`📥 ${config.method} ${config.url}`, response);
-    }
-    return response;
-  },
-
-  // Handle unauthorized responses
-  handleUnauthorized: <T>(response: ApiResponse<T>, config: ApiRequestConfig): ApiResponse<T> => {
-    // This will be handled by the error interceptor
-    return response;
-  },
-};
-
 // Main API Client class
 export class ApiClient {
   private config: ApiClientConfig;
-  private abortControllers: Map<string, AbortController> = new Map();
 
   constructor(config?: Partial<ApiClientConfig>) {
     this.config = {
       baseURL: API_CONFIG.BASE_URL || 'http://localhost:3001',
       timeout: API_CONFIG.TIMEOUT,
-      retries: API_CONFIG.RETRY_ATTEMPTS,
       headers: DEFAULT_HEADERS,
       ...config,
     };
@@ -154,131 +94,62 @@ export class ApiClient {
     return fullUrl;
   }
 
-  // Create abort controller for request cancellation
-  private createAbortController(url: string): AbortController {
-    // Cancel previous request to the same endpoint
-    const existingController = this.abortControllers.get(url);
-    if (existingController) {
-      existingController.abort();
+  // Add authentication token to headers
+  private addAuthToken(headers: Record<string, string>): Record<string, string> {
+    const tokens = tokenManager.getTokens();
+    if (tokens?.accessToken) {
+      return {
+        ...headers,
+        Authorization: `Bearer ${tokens.accessToken}`,
+      };
     }
-
-    const controller = new AbortController();
-    this.abortControllers.set(url, controller);
-    return controller;
+    return headers;
   }
 
-  // Apply request interceptors
-  private async applyRequestInterceptors(config: ApiRequestConfig): Promise<ApiRequestConfig> {
-    let processedConfig = { ...config };
-    
-    // Apply built-in interceptors
-    processedConfig = requestInterceptors.addDefaultHeaders(processedConfig);
-    processedConfig = requestInterceptors.addAuthToken(processedConfig);
-    processedConfig = requestInterceptors.logRequest(processedConfig);
-    
-    // Apply custom interceptors
-    if (this.config.requestInterceptors) {
-      for (const interceptor of this.config.requestInterceptors) {
-        if (interceptor.onRequest) {
-          const result = interceptor.onRequest(processedConfig);
-          processedConfig = result instanceof Promise ? await result : result;
-        }
-      }
-    }
-    
-    return processedConfig;
-  }
-
-  // Apply response interceptors
-  private async applyResponseInterceptors<T>(
-    response: ApiResponse<T>, 
-    config: ApiRequestConfig
-  ): Promise<ApiResponse<T>> {
-    let processedResponse = { ...response };
-    
-    // Apply built-in interceptors
-    processedResponse = responseInterceptors.logResponse(processedResponse, config);
-    processedResponse = responseInterceptors.handleUnauthorized(processedResponse, config);
-    
-    // Apply custom interceptors
-    if (this.config.responseInterceptors) {
-      for (const interceptor of this.config.responseInterceptors) {
-        if (interceptor.onResponse) {
-          const result = interceptor.onResponse(processedResponse);
-          processedResponse = result instanceof Promise ? await result : result;
-        }
-      }
-    }
-    
-    return processedResponse;
-  }
-
-  // Main request method
+  // Main request method using fetch
   async request<T = any>(config: ApiRequestConfig): Promise<ApiResponse<T>> {
-    const processedConfig = await this.applyRequestInterceptors(config);
-    const fullUrl = this.buildUrl(processedConfig.url, processedConfig.params);
-    const controller = this.createAbortController(fullUrl);
+    const fullUrl = this.buildUrl(config.url, config.params);
     
-    let lastError: ApiException;
-    const maxRetries = processedConfig.retries ?? this.config.retries ?? 0;
+    // Prepare headers
+    let headers: Record<string, string> = {
+      ...DEFAULT_HEADERS,
+      ...config.headers,
+    };
     
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        // Add delay for retries
-        if (attempt > 0) {
-          await new Promise(resolve => setTimeout(resolve, getRetryDelay(attempt - 1)));
-        }
+    // Add auth token if needed
+    if (config.withAuth !== false) {
+      headers = this.addAuthToken(headers);
+    }
+    
+    // Prepare fetch options
+    const fetchOptions: RequestInit = {
+      method: config.method,
+      headers,
+      credentials: 'same-origin', // Changed from 'include' to avoid CORS issues with credentials
+      mode: 'cors',
+    };
 
-        const fetchConfig: RequestInit = {
-          method: processedConfig.method,
-          headers: processedConfig.headers,
-          signal: controller.signal,
-          credentials: 'include',
-          mode: 'cors', // Explicitly set CORS mode
-        };
-
-        // Add body for non-GET requests
-        if (processedConfig.data && processedConfig.method !== 'GET') {
-          fetchConfig.body = JSON.stringify(processedConfig.data);
-        }
-
-        // Set timeout
-        const timeout = processedConfig.timeout ?? this.config.timeout ?? API_CONFIG.TIMEOUT;
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-        const response = await fetch(fullUrl, fetchConfig);
-        clearTimeout(timeoutId);
-
-        // Remove controller after successful request
-        this.abortControllers.delete(fullUrl);
-
-        if (!response.ok) {
-          throw new ApiException(
-            `HTTP ${response.status}: ${response.statusText}`,
-            response.status as any,
-            undefined,
-            { url: fullUrl, method: processedConfig.method }
-          );
-        }
-
-        const responseData: ApiResponse<T> = await response.json();
-        return await this.applyResponseInterceptors(responseData, processedConfig);
-
-      } catch (error) {
-        lastError = parseApiError(error);
-        
-        // Don't retry if it's the last attempt or if error shouldn't be retried
-        if (attempt === maxRetries || !shouldRetry(lastError, attempt, maxRetries)) {
-          break;
-        }
-        
-        logError(lastError, `API Request Retry ${attempt + 1}`);
-      }
+    // Add body for non-GET requests
+    if (config.data && config.method !== 'GET') {
+      fetchOptions.body = JSON.stringify(config.data);
     }
 
-    // Log final error and throw
-    logError(lastError!, `API Request Failed after ${maxRetries + 1} attempts`);
-    throw lastError!;
+    try {
+      // Make the request
+      const response = await fetch(fullUrl, fetchOptions);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Parse response
+      const responseData: ApiResponse<T> = await response.json();
+      return responseData;
+    } catch (error: any) {
+      const apiError = parseApiError(error);
+      logError(apiError, `API Request ${config.method} ${config.url}`);
+      throw apiError;
+    }
   }
 
   // Convenience methods
@@ -326,23 +197,6 @@ export class ApiClient {
     });
   }
 
-  // Cancel specific request
-  cancelRequest(url: string): void {
-    const controller = this.abortControllers.get(url);
-    if (controller) {
-      controller.abort();
-      this.abortControllers.delete(url);
-    }
-  }
-
-  // Cancel all pending requests
-  cancelAllRequests(): void {
-    this.abortControllers.forEach((controller, url) => {
-      controller.abort();
-    });
-    this.abortControllers.clear();
-  }
-
   // Update configuration
   updateConfig(config: Partial<ApiClientConfig>): void {
     this.config = { ...this.config, ...config };
@@ -373,12 +227,12 @@ export const apiRequest = async (
       json: async () => response,
       text: async () => JSON.stringify(response),
     } as Response;
-  } catch (error) {
+  } catch (error: any) {
     // Transform error to match existing error handling
     const apiError = parseApiError(error);
     const errorResponse = {
       ok: false,
-      status: apiError.status,
+      status: apiError.status || 500,
       statusText: apiError.message,
       json: async () => ({ success: false, message: apiError.message, data: null }),
       text: async () => apiError.message,

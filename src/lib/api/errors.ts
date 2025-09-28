@@ -1,6 +1,6 @@
 /**
  * API Error Handling Utilities
- * Centralized error handling and logging for API operations
+ * Simplified error handling and logging for API operations
  */
 
 import { ApiError, HttpStatusCode } from './types';
@@ -228,31 +228,6 @@ export const reportError = async (error: ApiException, context?: string): Promis
   }
 };
 
-// Retry utilities
-export const shouldRetry = (error: ApiException, attempt: number, maxRetries: number): boolean => {
-  if (attempt >= maxRetries) return false;
-  
-  // Don't retry client errors (4xx)
-  if (error.status >= 400 && error.status < 500) {
-    return false;
-  }
-  
-  // Don't retry authentication errors
-  if (error instanceof UnauthorizedException || error instanceof ForbiddenException) {
-    return false;
-  }
-  
-  // Retry server errors and network errors
-  return error instanceof ServerException || 
-         error instanceof NetworkException || 
-         error instanceof TimeoutException;
-};
-
-export const getRetryDelay = (attempt: number): number => {
-  // Exponential backoff: 1s, 2s, 4s, 8s, etc.
-  return Math.min(1000 * Math.pow(2, attempt), 10000);
-};
-
 // Error boundary utilities
 export const handleGlobalError = (error: any, errorInfo?: any): void => {
   const apiError = parseApiError(error);
@@ -269,7 +244,7 @@ export const getErrorToastConfig = (error: ApiException) => {
     title: getErrorTitle(error),
     description: error.message,
     variant: 'destructive' as const,
-    duration: getErrorDuration(error),
+    duration: 5000,
   };
 };
 
@@ -282,10 +257,4 @@ const getErrorTitle = (error: ApiException): string => {
   if (error instanceof TimeoutException) return 'Hết thời gian chờ';
   if (error instanceof ServerException) return 'Lỗi máy chủ';
   return 'Đã xảy ra lỗi';
-};
-
-const getErrorDuration = (error: ApiException): number => {
-  if (error instanceof NetworkException) return 10000; // 10 seconds for network errors
-  if (error instanceof ServerException) return 8000;   // 8 seconds for server errors
-  return 5000; // 5 seconds for other errors
 };
