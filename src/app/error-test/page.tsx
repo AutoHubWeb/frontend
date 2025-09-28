@@ -1,16 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 
 export default function ErrorTestPage() {
   const [testResults, setTestResults] = useState<any[]>([])
+  const [isClient, setIsClient] = useState(false)
+
+  // Check if we're running in the browser
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const addResult = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
     setTestResults(prev => [...prev, { message, type, timestamp: new Date().toISOString() }])
   }
 
   const simulatePhoneError = () => {
+    if (!isClient) return
+    
     const errorResponse = {
       statusCode: 400,
       message: "property.phone có ít nhất 10 ký tự",
@@ -22,6 +30,8 @@ export default function ErrorTestPage() {
   }
 
   const simulateDetailedValidationError = () => {
+    if (!isClient) return
+    
     const errorResponse = {
       statusCode: 422,
       message: "Validation failed",
@@ -50,6 +60,11 @@ export default function ErrorTestPage() {
     }
     
     addResult(`Extracted detailed message: ${errorMessage}`, 'info')
+  }
+
+  // Don't render anything on the server
+  if (!isClient) {
+    return <div className="container mx-auto p-4">Loading...</div>
   }
 
   return (

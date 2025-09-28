@@ -1,14 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toolService } from '@/lib/api/services/tool.service'
 
 export default function FetchTestPage() {
   const [testResult, setTestResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
+
+  // Check if we're running in the browser
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const testApiCall = async () => {
+    if (!isClient) return
+    
     setLoading(true)
     setError(null)
     
@@ -21,6 +29,11 @@ export default function FetchTestPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Don't render anything on the server
+  if (!isClient) {
+    return <div className="container mx-auto p-4">Loading...</div>
   }
 
   return (

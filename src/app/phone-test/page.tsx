@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -21,6 +21,12 @@ type ProfileUpdateData = z.infer<typeof profileUpdateSchema> & {
 export default function PhoneTestPage() {
   const [testResults, setTestResults] = useState<any[]>([])
   const [isTesting, setIsTesting] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  // Check if we're running in the browser
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const form = useForm<ProfileUpdateData>({
     resolver: zodResolver(profileUpdateSchema),
@@ -35,6 +41,8 @@ export default function PhoneTestPage() {
   }
 
   const testValidation = async (data: ProfileUpdateData) => {
+    if (!isClient) return
+    
     setIsTesting(true)
     setTestResults([])
     
@@ -77,6 +85,11 @@ export default function PhoneTestPage() {
 
   const testUndefinedPhone = async () => {
     await testValidation({ fullname: "Test User", phone: undefined })
+  }
+
+  // Don't render anything on the server
+  if (!isClient) {
+    return <div className="container mx-auto p-4">Loading...</div>
   }
 
   return (

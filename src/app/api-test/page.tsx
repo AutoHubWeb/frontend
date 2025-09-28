@@ -9,14 +9,22 @@ export default function ApiTestPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [detailedLogs, setDetailedLogs] = useState<string[]>([])
+  const [isClient, setIsClient] = useState(false)
   
   const { data: toolsData, isLoading: toolsLoading, error: toolsError } = useTools()
+
+  // Check if we're running in the browser
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const addLog = (message: string) => {
     setDetailedLogs(prev => [...prev, `${new Date().toISOString()}: ${message}`])
   }
 
   const testApiCall = async () => {
+    if (!isClient) return
+    
     setLoading(true)
     setError(null)
     setDetailedLogs([])
@@ -45,6 +53,8 @@ export default function ApiTestPage() {
 
   // Test direct fetch as well
   const testDirectFetch = async () => {
+    if (!isClient) return
+    
     setLoading(true)
     setError(null)
     setDetailedLogs([])
@@ -72,6 +82,11 @@ export default function ApiTestPage() {
       setLoading(false)
       addLog('Direct fetch test completed')
     }
+  }
+
+  // Don't render anything on the server
+  if (!isClient) {
+    return <div className="container mx-auto p-4">Loading...</div>
   }
 
   return (

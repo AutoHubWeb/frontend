@@ -5,12 +5,20 @@ import { useState, useEffect } from 'react'
 export default function CorsTestPage() {
   const [testResults, setTestResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  // Check if we're running in the browser
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const addResult = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
     setTestResults(prev => [...prev, { message, type, timestamp: new Date().toISOString() }])
   }
 
   const testDirectFetch = async () => {
+    if (!isClient) return
+    
     setLoading(true)
     setTestResults([])
     
@@ -56,6 +64,8 @@ export default function CorsTestPage() {
   }
 
   const testPreflight = async () => {
+    if (!isClient) return
+    
     setLoading(true)
     setTestResults([])
     
@@ -97,6 +107,11 @@ export default function CorsTestPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Don't render anything on the server
+  if (!isClient) {
+    return <div className="container mx-auto p-4">Loading...</div>
   }
 
   return (
