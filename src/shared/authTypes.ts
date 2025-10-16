@@ -21,7 +21,7 @@ export interface ExternalUser {
   isAdmin?: boolean;
   createdAt?: string;
   updatedAt?: string;
-  code: string;
+  code?: string;
 }
 
 // Request/Response schemas for external API
