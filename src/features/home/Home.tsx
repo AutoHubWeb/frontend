@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useTools } from "@/lib/api/hooks/useTools";
+import { useTopUpUsers, useUserTransactions } from "@/lib/api/hooks/useTransactions";
 import { mockVPS } from "@/lib/mockData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -163,6 +164,25 @@ export default function Home() {
     if (!selectedTool) return;
     handlePurchaseSuccess();
   };
+
+  // Add this new hook for fetching top-up users
+  const { data: topUpUsersResponse, isLoading: topUpUsersLoading, error: topUpUsersError } = useTopUpUsers();
+  
+  // Add this new hook for fetching user transactions
+  const { data: userTransactionsResponse, isLoading: userTransactionsLoading, error: userTransactionsError } = useUserTransactions();
+  
+  // Transform API response to match UI requirements
+  const topUpUsers = topUpUsersResponse?.map((user: any, index: number) => ({
+    id: index.toString(),
+    username: user.fullname,
+    amount: user.totalRecharge,
+    rank: index + 1
+  })) || [];
+  
+  // Transform transaction data for display
+  const userTransactions = userTransactionsResponse?.items || [];
+
+  console.log('Transformed top up users:', topUpUsers);
 
   return (
     <Layout>
@@ -519,40 +539,58 @@ export default function Home() {
                   <h3 className="text-lg font-bold">TOP NẠP</h3>
                 </div>
                 <CardContent className="p-0">
-                  <div className="space-y-0">
-                    {[
-                      { rank: 1, username: "tung***", amount: "14.465.000" },
-                      { rank: 2, username: "appu***", amount: "8.575.000" },
-                      { rank: 3, username: "szhi***", amount: "6.380.000" },
-                      { rank: 4, username: "tiep***", amount: "6.112.950" },
-                      { rank: 5, username: "keyf***", amount: "6.000.000" },
-                      { rank: 6, username: "gian***", amount: "5.834.000" },
-                      { rank: 7, username: "stya***", amount: "5.349.000" },
-                      { rank: 8, username: "minh***", amount: "4.290.000" },
-                      { rank: 9, username: "taip***", amount: "3.901.000" },
-                      { rank: 10, username: "Duck***", amount: "3.600.000" },
-                    ].map((user) => (
-                      <div
-                        key={user.rank}
-                        className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Badge 
-                            variant={user.rank <= 3 ? "destructive" : "secondary"}
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                          >
-                            {user.rank}
-                          </Badge>
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {user.username}
+                  {topUpUsersLoading ? (
+                    // Loading skeleton
+                    <div className="space-y-0">
+                      {[...Array(10)].map((_, index) => (
+                        <div key={index} className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center space-x-3">
+                            <Skeleton className="w-6 h-6 rounded-full" />
+                            <Skeleton className="h-4 w-20" />
+                          </div>
+                          <Skeleton className="h-6 w-24" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : topUpUsersError ? (
+                    // Error state
+                    <div className="text-center py-4 text-red-500">
+                      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                      <p>Lỗi tải dữ liệu top nạp</p>
+                      <p className="text-sm mt-1">Vui lòng thử lại sau</p>
+                    </div>
+                  ) : topUpUsers.length === 0 ? (
+                    // Empty state
+                    <div className="text-center py-4 text-gray-500">
+                      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                      <p>Chưa có dữ liệu top nạp</p>
+                    </div>
+                  ) : (
+                    // Data display
+                    <div className="space-y-0">
+                      {topUpUsers.map((user: any, index: number) => (
+                        <div
+                          key={user.id || index}
+                          className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Badge 
+                              variant={user.rank <= 3 ? "destructive" : "secondary"}
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                            >
+                              {user.rank}
+                            </Badge>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {user.username}
+                            </span>
+                          </div>
+                          <span className="bg-emerald-500 text-white px-3 py-1 rounded text-sm font-bold">
+                            {Number(user.amount).toLocaleString('vi-VN')}
                           </span>
                         </div>
-                        <span className="bg-emerald-500 text-white px-3 py-1 rounded text-sm font-bold">
-                          {user.amount}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -562,43 +600,75 @@ export default function Home() {
                   <h3 className="text-lg font-bold">LỊCH SỬ GIAO DỊCH</h3>
                 </div>
                 <CardContent className="p-0">
-                  <div className="space-y-0">
-                    {[
-                      { username: "buia***", product: "MUA (Tool Up Capsule Kỉ B)", time: "2025-09-19 12:40:11" },
-                      { username: "gian***", product: "MUA (Auto Bán Đồ Kho Báu)", time: "2025-09-18 19:41:34" },
-                      { username: "Nguy***", product: "MUA (Nhặt Thưởng Ngọc Rồng Đen)", time: "2025-09-17 20:56:32" },
-                      { username: "bach***", product: "MUA (Tự Động Đánh Quái)", time: "2025-09-17 12:50:43" },
-                      { username: "hibo***", product: "MUA (Tool Up Capsule Kỉ B)", time: "2025-09-17 12:21:59" },
-                      { username: "minh***", product: "MUA (Bot Bán Item)", time: "2025-09-17 07:00:53" },
-                      { username: "cayz***", product: "MUA (Tool Auto Up Đệ Ver1)", time: "2025-09-16 23:27:24" },
-                      { username: "0337***", product: "MUA (Nhặt Thưởng Ngọc Rồng Đen)", time: "2025-09-16 18:51:49" },
-                      { username: "ninh***", product: "MUA (Tự Động Đánh Quái)", time: "2025-09-15 17:00:53" },
-                      { username: "that***", product: "MUA (Tự Động Đánh Quái)", time: "2025-09-15 10:51:47" },
-                    ].map((transaction, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-red-500 font-bold text-sm">
-                                {transaction.username}
-                              </span>
+                  {userTransactionsLoading ? (
+                    // Loading skeleton
+                    <div className="space-y-0">
+                      {[...Array(10)].map((_, index) => (
+                        <div key={index} className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <Skeleton className="h-4 w-16" />
+                              </div>
+                              <Skeleton className="h-4 w-32" />
+                              {/* Skeleton for the code line */}
+                              <Skeleton className="h-3 w-24 mt-1" />
                             </div>
-                            <p className="text-gray-700 dark:text-gray-300 text-sm">
-                              {transaction.product}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-gray-500 text-xs">
-                              {transaction.time}
-                            </span>
+                            <div className="text-right">
+                              <Skeleton className="h-3 w-20" />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : userTransactionsError ? (
+                    // Error state
+                    <div className="text-center py-4 text-red-500">
+                      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                      <p>Lỗi tải dữ liệu giao dịch</p>
+                      <p className="text-sm mt-1">Vui lòng thử lại sau</p>
+                    </div>
+                  ) : userTransactions.length === 0 ? (
+                    // Empty state
+                    <div className="text-center py-4 text-gray-500">
+                      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                      <p>Chưa có giao dịch nào</p>
+                    </div>
+                  ) : (
+                    // Data display
+                    <div className="space-y-0">
+                      {userTransactions.map((transaction: any, index: number) => (
+                        <div
+                          key={transaction.id || index}
+                          className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="text-red-500 font-bold text-sm">
+                                  {transaction.note?.split('[')[0]?.trim() || 'Giao dịch'}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 dark:text-gray-300 text-sm">
+                                {transaction.note || `+${transaction.amount?.toLocaleString('vi-VN')}₫`}
+                              </p>
+                              {/* Display the transaction code */}
+                              {transaction.code && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  Mã giao dịch: {transaction.code}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <span className="text-gray-500 text-xs">
+                                {new Date(transaction.createdAt).toLocaleString('vi-VN')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

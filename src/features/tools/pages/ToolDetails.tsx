@@ -233,6 +233,13 @@ export default function ToolDetails() {
     );
   }
 
+  // Function to extract YouTube video ID from URL
+  const getYouTubeVideoId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -366,14 +373,29 @@ export default function ToolDetails() {
                             
                             {tool.videoUrl && (
                               <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
-                                <video 
-                                  controls 
-                                  className="w-full h-auto max-h-96"
-                                  data-testid="video-tool-demo"
-                                >
-                                  <source src={tool.videoUrl} type="video/mp4" />
-                                  Trình duyệt của bạn không hỗ trợ video.
-                                </video>
+                                {getYouTubeVideoId(tool.videoUrl) ? (
+                                  // YouTube video embed
+                                  <div className="relative pb-[56.25%] h-0"> {/* 16:9 Aspect Ratio */}
+                                    <iframe
+                                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(tool.videoUrl)}`}
+                                      className="absolute top-0 left-0 w-full h-full"
+                                      title={`Demo video for ${tool.name}`}
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allowFullScreen
+                                      data-testid="youtube-video-demo"
+                                    />
+                                  </div>
+                                ) : (
+                                  // Regular video file
+                                  <video 
+                                    controls 
+                                    className="w-full h-auto max-h-96"
+                                    data-testid="video-tool-demo"
+                                  >
+                                    <source src={tool.videoUrl} type="video/mp4" />
+                                    Trình duyệt của bạn không hỗ trợ video.
+                                  </video>
+                                )}
                               </div>
                             )}
                           </div>

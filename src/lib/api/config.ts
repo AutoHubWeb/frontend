@@ -79,6 +79,13 @@ export const API_ENDPOINTS = {
     IMPORT: '/api/v1/admin/import',
     SETTINGS: '/api/v1/admin/settings',
   },
+  
+  // Transactions endpoints
+  TRANSACTIONS: {
+    TOP_UP: '/api/v1/transactions/top-up',
+    ME: '/api/v1/transactions/me',
+    SE_PAY: '/api/v1/transactions/webhook/sepay',
+  },
 } as const;
 
 // HTTP Methods
@@ -147,6 +154,12 @@ export const QUERY_KEYS = {
   PAYMENTS: {
     ALL: ['payments'] as const,
     HISTORY: ['payments', 'history'] as const,
+  },
+  
+  TRANSACTIONS: {
+    TOP_UP: ['transactions', 'top-up'] as const,
+    ME: ['transactions', 'me'] as const,
+    SE_PAY: ['transactions', 'sepay'] as const,
   },
 } as const;
 

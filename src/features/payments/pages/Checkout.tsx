@@ -341,7 +341,7 @@ export default function Checkout() {
                           <span>Số dư hiện tại:</span>
                         </div>
                         <span className="font-bold text-emerald-600" data-testid="text-checkout-balance">
-                          {Number(user?.balance || 0).toLocaleString('vi-VN')}₫
+                          {Number(user?.accountBalance || 0).toLocaleString('vi-VN')}₫
                         </span>
                       </div>
                       

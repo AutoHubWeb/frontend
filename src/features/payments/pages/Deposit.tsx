@@ -7,23 +7,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/api";
-import { apiRequest } from "@/lib/queryClient";
+import { tokenManager } from "@/lib/api/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
-  CreditCard, 
-  Wallet, 
-  QrCode,
-  CheckCircle,
-  Clock,
-  DollarSign
+  CreditCard as CreditCardIcon,
+  Wallet as WalletIcon, 
+  QrCode as QrCodeIcon,
+  CheckCircle as CheckCircleIcon,
+  Clock as ClockIcon,
+  DollarSign as DollarSignIcon
 } from "lucide-react";
-;
 import type { Payment } from "@/lib/api/types";
 
 export default function Deposit() {
@@ -32,32 +29,94 @@ export default function Deposit() {
   const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
+  const [userCode, setUserCode] = useState("");
 
   const { data: payments, isLoading: paymentsLoading } = useQuery<Payment[]>({
-    queryKey: ["/api/payments"],
+    queryKey: ["/api/v1/transactions/me"],
+    queryFn: async () => {
+      const tokens = tokenManager.getTokens();
+      if (!tokens?.accessToken) {
+        throw new Error("Unauthorized");
+      }
+      
+      const response = await fetch("https://shopnro.hitly.click/api/v1/transactions/me", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${tokens.accessToken}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch transactions");
+      }
+      
+      const data = await response.json();
+      // The API returns { items: TransactionItem[], meta: {...} }
+      // We need to map TransactionItem to Payment type
+      const items = data.data?.items || data.data || [];
+      
+      // Convert TransactionItem to Payment type
+      return items.map((item: any) => ({
+        id: item.id,
+        userId: item.user?.id,
+        amount: item.amount,
+        description: item.note,
+        status: 'completed', // Default to completed for transaction history
+        type: 'deposit', // Default to deposit for this page
+        createdAt: item.createdAt
+      }));
+    },
     retry: false,
   });
 
   const depositMutation = useMutation({
-    mutationFn: async ({ amount, description }: { amount: string; description: string }) => {
-      const response = await apiRequest("POST", "/api/deposit", { 
-        amount: Number(amount) * 100, // Convert to cents
-        description 
+    mutationFn: async () => {
+      if (!amount || Number(amount) <= 0) {
+        throw new Error("Vui lòng nhập số tiền hợp lệ");
+      }
+
+      // Get user code from API me endpoint using GET method
+      const tokens = tokenManager.getTokens();
+      const meResponse = await fetch("https://shopnro.hitly.click/api/v1/auth/me", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          // Add auth token if available
+          ...(tokens?.accessToken && {
+            "Authorization": `Bearer ${tokens.accessToken}`
+          })
+        }
       });
-      return await response.json();
+      
+      const userData = await meResponse.json();
+      const code = userData?.data?.code || userData?.code || user?.email?.split('@')[0] || 'olsy2wHd';
+      setUserCode(code);
+      
+      // Create QR code URL
+      const qrUrl = `https://qr.sepay.vn/img?bank=TPBank&acc=00005572823&amount=${amount}&des=${code}`;
+      
+      // Open QR code in new tab
+      window.open(qrUrl, '_blank');
+      
+      return { code, amount, userData };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
-        title: "Nạp tiền thành công",
-        description: "Số dư của bạn đã được cập nhật",
+        title: "Mở trang thanh toán",
+        description: "Trang thanh toán đã được mở trong tab mới. Vui lòng hoàn tất thanh toán.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      
+      // Recall API me to update user balance
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      }, 90000); // Wait 90 seconds (1.5 minutes) before refreshing data
+      
+      // Reset amount
       setAmount("");
-      setDescription("");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -72,26 +131,14 @@ export default function Deposit() {
       
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể nạp tiền",
+        description: error.message || "Không thể tạo mã thanh toán",
         variant: "destructive",
       });
     },
   });
 
   const handleDeposit = () => {
-    if (!amount || Number(amount) <= 0) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng nhập số tiền hợp lệ",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    depositMutation.mutate({
-      amount,
-      description: description || "Nạp tiền vào tài khoản",
-    });
+    depositMutation.mutate();
   };
 
   const quickAmounts = [50000, 100000, 200000, 500000, 1000000, 2000000];
@@ -122,7 +169,7 @@ export default function Deposit() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <CreditCard className="mr-2 h-5 w-5" />
+                    <CreditCardIcon className="mr-2 h-5 w-5" />
                     Nạp tiền vào tài khoản
                   </CardTitle>
                 </CardHeader>
@@ -131,11 +178,11 @@ export default function Deposit() {
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <Wallet className="h-5 w-5 text-emerald-600" />
+                        <WalletIcon className="h-5 w-5 text-emerald-600" />
                         <span className="font-medium">Số dư hiện tại:</span>
                       </div>
                       <span className="text-2xl font-bold text-emerald-600" data-testid="text-current-balance">
-                        {Number(user?.balance || 0).toLocaleString('vi-VN')}₫
+                        {Number(user?.accountBalance || 0).toLocaleString('vi-VN')}₫
                       </span>
                     </div>
                   </div>
@@ -176,19 +223,6 @@ export default function Deposit() {
                     </p>
                   </div>
 
-                  {/* Description */}
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Ghi chú (tùy chọn)</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Nhập ghi chú cho giao dịch này"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows={3}
-                      data-testid="input-description"
-                    />
-                  </div>
-
                   <Button 
                     className="w-full" 
                     onClick={handleDeposit}
@@ -204,7 +238,7 @@ export default function Deposit() {
               <Card className="mt-6">
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <QrCode className="mr-2 h-5 w-5" />
+                    <QrCodeIcon className="mr-2 h-5 w-5" />
                     Hướng dẫn nạp tiền
                   </CardTitle>
                 </CardHeader>
@@ -213,19 +247,21 @@ export default function Deposit() {
                     <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
                       <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Chuyển khoản ngân hàng</h4>
                       <div className="text-sm space-y-1">
-                        <p><strong>Ngân hàng:</strong> Vietcombank</p>
-                        <p><strong>Số tài khoản:</strong> 1234567890</p>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <img 
+                            src="https://cdn.vietqr.io/img/TPB.png" 
+                            alt="TPBank" 
+                            className="w-24 h-24"
+                          />
+                          <span><strong>Ngân hàng:</strong> TPBank</span>
+                        </div>
+                        <p><strong>Số tài khoản:</strong> 00005572823</p>
                         <p><strong>Chủ tài khoản:</strong> CONG TY TOOLMARKET</p>
-                        <p><strong>Nội dung:</strong> NAPIEN [email của bạn]</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-emerald-50 dark:bg-emerald-950 p-4 rounded-lg">
-                      <h4 className="font-semibold text-emerald-800 dark:text-emerald-200 mb-2">Ví điện tử MoMo</h4>
-                      <div className="text-sm space-y-1">
-                        <p><strong>Số điện thoại:</strong> 0901234567</p>
-                        <p><strong>Chủ tài khoản:</strong> TOOLMARKET</p>
-                        <p><strong>Nội dung:</strong> NAPIEN [email của bạn]</p>
+                        <p><strong>Nội dung:</strong> 
+                          <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">
+                            {userCode || (user ? user.code?.split('@')[0] || 'Đang tải...' : 'Đang tải...')}
+                          </span>
+                        </p>
                       </div>
                     </div>
 
@@ -233,7 +269,8 @@ export default function Deposit() {
                       <p className="font-medium mb-2">Lưu ý quan trọng:</p>
                       <ul className="space-y-1 list-disc list-inside">
                         <li>Vui lòng ghi đúng nội dung chuyển khoản để hệ thống tự động cộng tiền</li>
-                        <li>Số dư sẽ được cập nhật trong vòng 5-10 phút sau khi chuyển khoản thành công</li>
+                        <li>Số dư sẽ được cập nhật trong vòng 1-2 phút sau khi chuyển khoản thành công</li>
+                        <li className="text-red-600 dark:text-red-400 font-medium">Nếu nạp sai nội dung thì liên hệ admin - 20%</li>
                         <li>Nếu có vấn đề, vui lòng liên hệ bộ phận hỗ trợ</li>
                       </ul>
                     </div>
@@ -257,7 +294,7 @@ export default function Deposit() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Số dư hiện tại</span>
                     <span className="font-bold text-emerald-600" data-testid="text-sidebar-balance">
-                      {Number(user?.balance || 0).toLocaleString('vi-VN')}₫
+                      {Number(user?.accountBalance || 0).toLocaleString('vi-VN')}₫
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -299,7 +336,7 @@ export default function Deposit() {
                         <div key={payment.id} className="flex items-center justify-between py-2">
                           <div className="flex items-center space-x-2">
                             <div className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center">
-                              <DollarSign className="w-3 h-3 text-emerald-600" />
+                              <DollarSignIcon className="w-3 h-3 text-emerald-600" />
                             </div>
                             <div>
                               <p className="text-sm font-medium">
@@ -316,12 +353,12 @@ export default function Deposit() {
                           >
                             {payment.status === 'completed' ? (
                               <>
-                                <CheckCircle className="w-3 h-3 mr-1" />
+                                <CheckCircleIcon className="w-3 h-3 mr-1" />
                                 Thành công
                               </>
                             ) : payment.status === 'pending' ? (
                               <>
-                                <Clock className="w-3 h-3 mr-1" />
+                                <ClockIcon className="w-3 h-3 mr-1" />
                                 Đang xử lý
                               </>
                             ) : (

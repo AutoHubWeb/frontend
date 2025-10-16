@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
+import { usePageReload } from "@/hooks/usePageReload"
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   X, 
@@ -20,35 +19,35 @@ import {
   ShieldAlert, 
   Users, 
   MessageSquare, 
-  ExternalLink, 
-  Facebook,
   Sparkles,
   Star,
   Zap,
-  Gift,
   Crown
 } from "lucide-react";
 
 export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
+  const isReload = usePageReload();
 
   useEffect(() => {
-    // Always clear session storage on every page load to ensure modal shows
-    sessionStorage.removeItem('welcome-modal-dismissed-session');
+    // Reset session flag when component mounts (new page load)
+    sessionStorage.removeItem('welcome-modal-shown-session');
     
-    // Show modal after a short delay for better UX
-    const timer = setTimeout(() => {
-      setIsOpen(true);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []); // Only run once on mount (page load/reload)
+    // Only show modal on reload
+    if (isReload) {
+      // Show modal after a short delay for better UX
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+        // Mark as shown in this session to prevent multiple displays
+        sessionStorage.setItem('welcome-modal-shown-session', 'true');
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isReload]);
 
   const handleClose = () => {
     setIsOpen(false);
-    // Mark modal as dismissed in current session
-    sessionStorage.setItem('welcome-modal-dismissed-session', 'true');
   };
 
   return (

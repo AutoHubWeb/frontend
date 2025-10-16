@@ -8,12 +8,14 @@ import { authService, AuthService } from './auth.service';
 import { userService, UserService } from './user.service';
 import { toolService, ToolService } from './tool.service';
 import { fileService, FileService } from './file.service';
+import { transactionService, TransactionService } from './transaction.service';
 
 // Export core services
 export { authService, AuthService } from './auth.service';
 export { userService, UserService } from './user.service';
 export { toolService, ToolService } from './tool.service';
 export { fileService, FileService } from './file.service';
+export { transactionService, TransactionService, type TransactionItem } from './transaction.service';
 
 // Export all services as a single object for convenience
 export const apiServices = {
@@ -21,6 +23,7 @@ export const apiServices = {
   users: userService,
   tools: toolService,
   files: fileService,
+  transactions: transactionService,
 };
 
 // Service factory for dependency injection (if needed)
@@ -29,6 +32,7 @@ export const createServices = () => ({
   users: new UserService(),
   tools: new ToolService(),
   files: new FileService(),
+  transactions: new TransactionService(),
 });
 
 // Type for the services object

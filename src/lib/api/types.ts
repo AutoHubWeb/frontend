@@ -321,6 +321,19 @@ export interface FileUploadResponse {
   mimeType: string;
 }
 
+// Transaction types
+export interface TopUpUser {
+  id: string;
+  username: string;
+  amount: number;
+  rank: number;
+}
+
+export interface TopUpApiResponse {
+  fullname: string;
+  totalRecharge: number;
+}
+
 // Notification types
 export interface Notification {
   id: string;
