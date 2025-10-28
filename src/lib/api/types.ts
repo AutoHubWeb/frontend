@@ -345,6 +345,21 @@ export interface Notification {
   createdAt: string;
 }
 
+// Proxy types
+export interface Proxy {
+  id: string;
+  ip: string;
+  port: number;
+  username?: string;
+  password?: string;
+  protocol: 'http' | 'https' | 'socks5';
+  country?: string;
+  city?: string;
+  status: 'active' | 'inactive' | 'maintenance';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // WebSocket types
 export interface WebSocketMessage {
   type: string;

@@ -86,6 +86,11 @@ export const API_ENDPOINTS = {
     ME: '/api/v1/transactions/me',
     SE_PAY: '/api/v1/transactions/webhook/sepay',
   },
+  
+  // Proxy endpoints
+  PROXY: {
+    BASE: '/api/v1/proxy',
+  },
 } as const;
 
 // HTTP Methods
@@ -160,6 +165,11 @@ export const QUERY_KEYS = {
     TOP_UP: ['transactions', 'top-up'] as const,
     ME: ['transactions', 'me'] as const,
     SE_PAY: ['transactions', 'sepay'] as const,
+  },
+  
+  PROXY: {
+    ALL: ['proxy'] as const,
+    LIST: ['proxy', 'list'] as const,
   },
 } as const;
 

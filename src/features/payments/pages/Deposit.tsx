@@ -19,9 +19,11 @@ import {
   QrCode as QrCodeIcon,
   CheckCircle as CheckCircleIcon,
   Clock as ClockIcon,
-  DollarSign as DollarSignIcon
+  DollarSign as DollarSignIcon,
+  Server as ServerIcon
 } from "lucide-react";
 import type { Payment } from "@/lib/api/types";
+import { useProxies } from "@/lib/api/hooks";
 
 export default function Deposit() {
   const { user, isAuthenticated } = useAuth();
@@ -30,6 +32,12 @@ export default function Deposit() {
 
   const [amount, setAmount] = useState("");
   const [userCode, setUserCode] = useState("");
+
+  // Fetch proxies
+  const { data: proxiesResponse, isLoading: proxiesLoading } = useProxies();
+  
+  // Extract proxy items from the response
+  const proxyItems = proxiesResponse?.items || [];
 
   const { data: payments, isLoading: paymentsLoading } = useQuery<Payment[]>({
     queryKey: ["/api/v1/transactions/me"],
@@ -371,6 +379,61 @@ export default function Deposit() {
                   ) : (
                     <div className="text-center py-4">
                       <p className="text-sm text-muted-foreground">Chưa có giao dịch nạp tiền nào</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Proxy Information */}
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <ServerIcon className="mr-2 h-5 w-5" />
+                    Proxy Servers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {proxiesLoading ? (
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="flex items-center justify-between p-2">
+                          <div className="space-y-1">
+                            <div className="h-4 bg-muted rounded w-24"></div>
+                            <div className="h-3 bg-muted rounded w-16"></div>
+                          </div>
+                          <div className="h-4 bg-muted rounded w-20"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : proxyItems && proxyItems.length > 0 ? (
+                    <div className="space-y-3">
+                      {proxyItems.slice(0, 5).map((proxy) => (
+                        <div key={proxy.id} className="flex items-center justify-between py-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                              <ServerIcon className="w-3 h-3 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {proxy.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {proxy.description}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge 
+                            variant={proxy.status === 1 ? 'default' : proxy.status === 0 ? 'secondary' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {proxy.status === 1 ? 'Active' : proxy.status === 0 ? 'Inactive' : 'Maintenance'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-muted-foreground">No proxy servers available</p>
                     </div>
                   )}
                 </CardContent>

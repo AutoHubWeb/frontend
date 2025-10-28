@@ -21,6 +21,9 @@ export * from './useDiscountCodes';
 // Admin hooks
 export * from './useAdmin';
 
+// Proxy hooks
+export * from './useProxy';
+
 // Common hook utilities
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../config';
