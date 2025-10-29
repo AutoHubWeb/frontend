@@ -12,7 +12,7 @@ import { Search, AlertCircle, Calendar, ShoppingCart } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useUserTransactions } from "@/lib/api/hooks/useTransactions";
 import { useUserOrders } from "@/lib/api/hooks/useOrders";
-import type { TransactionItem } from "@/lib/api/services";
+import type { TransactionItem } from "@/lib/api/services/transaction.service";
 
 export default function History() {
   const { isAuthenticated } = useAuth();
@@ -34,7 +34,7 @@ export default function History() {
         transaction.amount.toString().includes(searchQuery)
       );
     });
-  }, [userTransactions, searchQuery]);
+  }, [userTransactions, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter orders based on search query
   const filteredOrders = useMemo(() => {
@@ -48,7 +48,7 @@ export default function History() {
         order.totalPrice.toString().includes(searchQuery)
       );
     });
-  }, [userOrders, searchQuery]);
+  }, [userOrders, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Layout showSidebar={isAuthenticated}>
