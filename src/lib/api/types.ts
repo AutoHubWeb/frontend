@@ -360,6 +360,50 @@ export interface Proxy {
   updatedAt?: string;
 }
 
+// VPS types
+export interface VPS {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  ram: number;
+  disk: number;
+  cpu: number;
+  bandwidth: number;
+  location?: string;
+  os?: string;
+  tags?: string[];
+  soldQuantity: number;
+  viewCount: number;
+  status: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Order types
+export interface CreateOrderRequest {
+  type: 'tool' | 'vps' | 'proxy';
+  toolId?: string;
+  vpsId?: string;
+  proxyId?: string;
+  duration?: number; // 1: 1 month, 2: 3 months, 3: permanent (for tools only)
+}
+
+export interface OrderHistory {
+  createdAt: string;
+  action: string;
+  description: string;
+}
+
+export interface OrderResponse {
+  code: string;
+  totalPrice: number;
+  status: string;
+  note: string;
+  type: 'tool' | 'vps';
+  histories: OrderHistory[];
+}
+
 // WebSocket types
 export interface WebSocketMessage {
   type: string;

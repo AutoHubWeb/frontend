@@ -24,6 +24,12 @@ export * from './useAdmin';
 // Proxy hooks
 export * from './useProxy';
 
+// VPS hooks
+export * from './useVps';
+
+// Orders hooks
+export * from './useOrders';
+
 // Common hook utilities
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../config';

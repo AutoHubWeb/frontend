@@ -45,6 +45,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Tool, Category } from "@/lib/api/types";
+import Link from "next/link";
+import { useVpsPlans } from "@/lib/api/hooks/useVps";
+import { useCreateOrder } from "@/lib/api/hooks/useOrders";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -188,6 +191,119 @@ export default function Home() {
 
   console.log('Transformed top up users:', topUpUsers);
 
+  const { data: vpsResponse, isLoading: vpsLoading, error: vpsError } = useVpsPlans();
+  const vpsPlans = (vpsResponse?.data || []).filter(vps => vps.status === 1);
+
+  const createOrderMutation = useCreateOrder({
+    onSuccess: (data) => {
+      toast({
+        title: "Đặt hàng thành công",
+        description: data.note || "Đơn hàng của bạn đã được tạo thành công",
+      });
+    },
+    onError: (error: any) => {
+      // Handle insufficient balance error
+      if (error.message === "Số dư không đủ") {
+        toast({
+          title: "Số dư không đủ",
+          description: "Vui lòng nạp thêm tiền để tiếp tục mua hàng",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Lỗi đặt hàng",
+          description: error.message || "Không thể tạo đơn hàng",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const createVpsOrderMutation = useCreateOrder({
+    onSuccess: (data) => {
+      toast({
+        title: "Đặt hàng VPS thành công",
+        description: data.note || "Đơn hàng VPS của bạn đã được tạo thành công",
+      });
+    },
+    onError: (error: any) => {
+      // Handle insufficient balance error
+      if (error.message === "Số dư không đủ") {
+        toast({
+          title: "Số dư không đủ",
+          description: "Vui lòng nạp thêm tiền để tiếp tục mua VPS",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Lỗi đặt hàng VPS",
+          description: error.message || "Không thể tạo đơn hàng VPS",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const createProxyOrderMutation = useCreateOrder({
+    onSuccess: (data) => {
+      toast({
+        title: "Đặt hàng Proxy thành công",
+        description: data.note || "Đơn hàng Proxy của bạn đã được tạo thành công",
+      });
+    },
+    onError: (error: any) => {
+      console.log('Proxy Order Error:', error);
+      // Handle insufficient balance error and other errors
+      const errorMessage = error?.message || 'Không thể tạo đơn hàng Proxy';
+      
+      if (errorMessage === "Số dư không đủ") {
+        toast({
+          title: "Số dư không đủ",
+          description: "Vui lòng nạp thêm tiền để tiếp tục mua Proxy",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Lỗi đặt hàng Proxy",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const handlePurchaseVps = (vps: any) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Cần đăng nhập",
+        description: "Vui lòng đăng nhập để mua VPS",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createVpsOrderMutation.mutate({
+      type: "vps",
+      vpsId: vps.id,
+    });
+  };
+
+  const handlePurchaseProxy = (proxy: any) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Cần đăng nhập",
+        description: "Vui lòng đăng nhập để mua proxy",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createProxyOrderMutation.mutate({
+      type: "proxy",
+      proxyId: proxy.id,
+    });
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-background">
@@ -296,7 +412,7 @@ export default function Home() {
             )}
           </motion.div>
 
-          {/* VPS Section */}
+          {/* VPS & PROXY Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -306,15 +422,50 @@ export default function Home() {
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">
                 <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  VPS VIỆT
+                  VPS & PROXY
                 </span>
               </h2>
               <div className="h-1 w-16 bg-gradient-to-r from-purple-600 to-blue-600 mx-auto rounded-full"></div>
             </div>
             
-            {(searchQuery ? filteredVPS : mockVPS).length > 0 ? (
+            {vpsLoading ? (
+              // Loading state
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(searchQuery ? filteredVPS : mockVPS).map((vps, index) => (
+                {[...Array(3)].map((_, index) => (
+                  <Card key={index} className="overflow-hidden border-2">
+                    <CardContent className="p-6">
+                      <div className="text-center mb-4">
+                        <Skeleton className="w-16 h-16 rounded-lg mx-auto mb-3" />
+                        <Skeleton className="h-6 w-3/4 mx-auto mb-2" />
+                        <Skeleton className="h-8 w-1/2 mx-auto mb-1" />
+                      </div>
+                      
+                      <div className="space-y-3 mb-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4 mx-auto" />
+                      </div>
+                      
+                      <div className="flex items-center justify-center space-x-4 text-sm mb-4">
+                        <Skeleton className="h-4 w-1/4" />
+                        <Skeleton className="h-4 w-1/4" />
+                      </div>
+                      
+                      <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : vpsError ? (
+              // Error state
+              <div className="text-center py-8">
+                <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">Lỗi tải dữ liệu VPS</p>
+              </div>
+            ) : vpsPlans.length > 0 ? (
+              // Data display - show all active VPS items (status = 1)
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {vpsPlans.map((vps, index) => (
                   <motion.div
                     key={vps.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -330,84 +481,64 @@ export default function Home() {
                           <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">{vps.name}</h3>
                           <p className="text-2xl font-bold text-red-500 mb-1">
                             {Number(vps.price).toLocaleString('vi-VN')} ₫
-                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400"> / {vps.duration}</span>
+                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400"> / tháng</span>
                           </p>
                         </div>
                         
                         <div className="space-y-3 mb-4">
                           <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
                             <Cpu className="w-4 h-4" />
-                            <span className="font-medium">{vps.specs.cores}</span>
+                            <span className="font-medium">{vps.cpu} CPU</span>
                           </div>
                           <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
                             <HardDrive className="w-4 h-4" />
-                            <span className="font-medium">{vps.specs.ram}</span>
+                            <span className="font-medium">{vps.ram} GB RAM</span>
                           </div>
-                          <div className="text-center text-sm text-blue-600 dark:text-blue-400 font-medium">
-                            {vps.specs.feature}
+                          <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
+                            <HardDrive className="w-4 h-4" />
+                            <span className="font-medium">{vps.disk} GB SSD</span>
                           </div>
+                          {vps.location && (
+                            <div className="text-center text-sm text-blue-600 dark:text-blue-400 font-medium">
+                              {vps.location}
+                            </div>
+                          )}
                         </div>
                         
                         <div className="flex items-center justify-center space-x-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
                           <div className="flex items-center space-x-1">
                             <Eye className="w-4 h-4" />
-                            <span>Còn lại: {vps.availability.inStock}</span>
+                            <span>Đã bán: {vps.soldQuantity}</span>
                           </div>
                           <div>
-                            <span>Lượt mua: {vps.availability.purchased}</span>
+                            <span>Lượt xem: {vps.viewCount}</span>
                           </div>
                         </div>
                         
-                        <Button 
-                          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium"
-                          onClick={() => {
-                            if (!isAuthenticated) {
-                              toast({
-                                title: "Cần đăng nhập",
-                                description: "Vui lòng đăng nhập để xem demo mua VPS",
-                                variant: "default",
-                              });
-                              return;
-                            }
-                            toast({
-                              title: "Demo: Mua VPS",
-                              description: "Đây là demo - không có giao dịch thật sự được thực hiện",
-                            });
-                          }}
-                        >
-                          ĐĂNG KÝ
-                        </Button>
+                        <Link href="/vps">
+                          <Button 
+                            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium"
+                            disabled={createVpsOrderMutation.isPending}
+                          >
+                            {createVpsOrderMutation.isPending && createVpsOrderMutation.variables?.vpsId === vps.id
+                              ? "Đang xử lý..."
+                              : "ĐĂNG KÝ"}
+                          </Button>
+                        </Link>
                       </CardContent>
                     </Card>
                   </motion.div>
                 ))}
               </div>
             ) : (
+              // Empty state
               <div className="text-center py-8">
-                <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">
-                  {searchQuery ? `Không tìm thấy VPS nào cho "${searchQuery}"` : "Không có VPS nào"}
-                </p>
+                <Server className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">Không có VPS nào khả dụng</p>
               </div>
             )}
           </motion.div>
 
-          {/* PROXY VIỆT Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="mt-16 mb-12"
-          >
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                <span className="bg-gradient-to-r from-red-600 to-yellow-600 bg-clip-text text-transparent">
-                  PROXY VIỆT
-                </span>
-              </h2>
-              <div className="h-1 w-16 bg-gradient-to-r from-red-600 to-yellow-600 mx-auto rounded-full"></div>
-            </div>
-          
           {/* Proxy Display */}
           {proxyLoading ? (
             // Loading state
@@ -476,23 +607,13 @@ export default function Home() {
                       {/* Purchase Button */}
                       <Button 
                         className="w-full bg-gradient-to-r from-red-500 to-yellow-600 hover:from-red-600 hover:to-yellow-700 text-white font-medium py-2"
-                        onClick={() => {
-                          if (!isAuthenticated) {
-                            toast({
-                              title: "Cần đăng nhập",
-                              description: "Vui lòng đăng nhập để mua proxy",
-                              variant: "default",
-                            });
-                            return;
-                          }
-                          toast({
-                            title: "Demo: Mua Proxy",
-                            description: `Mua ${proxy.name} - ${proxy.price.toLocaleString('vi-VN')}₫`,
-                          });
-                        }}
+                        onClick={() => handlePurchaseProxy(proxy)}
+                        disabled={createProxyOrderMutation.isPending}
                         data-testid="button-purchase-proxy"
                       >
-                        MUA ({proxy.price.toLocaleString('vi-VN')}₫)
+                        {createProxyOrderMutation.isPending && createProxyOrderMutation.variables?.proxyId === proxy.id
+                          ? "Đang xử lý..."
+                          : `MUA (${proxy.price.toLocaleString('vi-VN')}₫)`}
                       </Button>
                     </CardContent>
                   </Card>
@@ -506,7 +627,6 @@ export default function Home() {
               <p className="text-muted-foreground">Không có proxy nào</p>
             </div>
           )}
-        </motion.div>
 
           {/* Statistics Section */}
           <motion.div

@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useToolById } from "@/lib/api/hooks/useTools";
+import { useCreateOrder } from "@/lib/api/hooks/useOrders";
 import { isUnauthorizedError } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -46,26 +47,32 @@ export default function ToolDetails() {
 
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<{duration: number, amount: string, name: string, rawDuration?: number} | null>(null);
 
   // Use real API call with proper endpoint
   const { data: toolResponse, isLoading, error } = useToolById(id || "");
   
   // Transform API tool to format expected by component
-  const transformTool = (apiTool: Tool) => {
+  const transformTool = (apiTool: any) => {
     if (!apiTool) return null;
+    
+    // Map the plans correctly
+    const plans = apiTool.plans?.map((plan: any) => ({
+      name: plan.name,
+      duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} tháng`,
+      amount: plan.price?.toString() || "0",
+      durationValue: plan.duration === -1 ? 3 : plan.duration <= 1 ? 1 : 2, // Map to 1, 2, 3
+      rawDuration: plan.duration // Keep the raw duration value for API calls
+    })) || [];
     
     return {
       id: apiTool.id,
       name: apiTool.name,
       description: apiTool.description,
-      price: apiTool.plans?.[0]?.price?.toString() || "0",
-      prices: apiTool.plans?.map(plan => ({
-        duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} tháng`,
-        amount: plan.price.toString()
-      })) || [],
-      imageUrl: apiTool.images?.[0]?.fileUrl 
-        ? `/static/tool/${apiTool.images[0].fileUrl.split('/').pop()}` 
-        : "/static/tool/default.jpg",
+      price: plans[0]?.amount || "0",
+      prices: plans,
+      // Fix image URL - use the fileUrl directly
+      imageUrl: `https://shopnro.hitly.click/api/v1/files${apiTool.images?.[0]?.fileUrl}` || "/static/tool/default.jpg",
       videoUrl: apiTool.demo || "",
       instructions: "Hướng dẫn sử dụng công cụ sẽ được cung cấp sau khi mua.",
       views: apiTool.viewCount || 0,
@@ -79,21 +86,19 @@ export default function ToolDetails() {
   
   const tool: any = toolResponse ? transformTool(toolResponse) : null;
 
-  const purchaseMutation = useMutation({
-    mutationFn: async ({ toolId, discountCodeId }: { toolId: string; discountCodeId?: string }) => {
-      return await apiRequest("POST", "/api/purchases", { toolId, discountCodeId });
-    },
-    onSuccess: () => {
+  const createOrderMutation = useCreateOrder({
+    onSuccess: (data) => {
       toast({
-        title: "Mua thành công",
-        description: "Công cụ đã được thêm vào danh sách đã mua",
+        title: "Đặt hàng thành công",
+        description: data?.note || "Đơn hàng của bạn đã được tạo thành công",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/purchases"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
       setPurchaseDialogOpen(false);
       setDiscountCode("");
+      setSelectedPlan(null);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -106,11 +111,20 @@ export default function ToolDetails() {
         return;
       }
       
-      toast({
-        title: "Lỗi",
-        description: error.message || "Không thể mua công cụ",
-        variant: "destructive",
-      });
+      // Handle insufficient balance error
+      if (error.message === "Số dư không đủ") {
+        toast({
+          title: "Số dư không đủ",
+          description: "Vui lòng nạp thêm tiền để tiếp tục mua hàng",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Lỗi",
+          description: error.message || "Không thể tạo đơn hàng",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -134,7 +148,7 @@ export default function ToolDetails() {
     },
   });
 
-  const handlePurchase = () => {
+  const handlePurchase = (plan: any) => {
     if (!isAuthenticated) {
       toast({
         title: "Cần đăng nhập",
@@ -147,15 +161,22 @@ export default function ToolDetails() {
       return;
     }
 
+    setSelectedPlan(plan);
     setPurchaseDialogOpen(true);
   };
 
   const handleConfirmPurchase = () => {
-    if (!tool) return;
+    if (!tool || !selectedPlan) return;
     
-    purchaseMutation.mutate({
+    // Use rawDuration if available, otherwise use duration
+    const durationValue = selectedPlan.rawDuration !== undefined ? 
+      (selectedPlan.rawDuration === -1 ? 3 : selectedPlan.rawDuration) : 
+      selectedPlan.duration;
+    
+    createOrderMutation.mutate({
+      type: "tool",
       toolId: tool.id,
-      discountCodeId: discountCode || undefined,
+      duration: durationValue,
     });
   };
 
@@ -294,8 +315,8 @@ export default function ToolDetails() {
                         <Button
                           key={index}
                           variant="outline"
-                          className="w-full h-12 justify-between bg-primary text-primary-foreground hover:bg-primary/90 border-gray-300 dark:border-gray-600"
-                          onClick={() => handlePurchase()}
+                          className="w-full h-12 justify-between bg-primary text-primary-foreground hover:shadow-md transition-all duration-200 border-gray-300 dark:border-gray-600"
+                          onClick={() => handlePurchase(priceOption)}
                           data-testid={`button-purchase-${priceOption.duration.replace(' ', '-').toLowerCase()}`}
                         >
                           <span>Mua {priceOption.duration}</span>
@@ -306,8 +327,8 @@ export default function ToolDetails() {
                       )) : (
                         <Button
                           variant="outline"
-                          className="w-full h-12 justify-between bg-primary text-primary-foreground hover:bg-primary/90 border-gray-300 dark:border-gray-600"
-                          onClick={() => handlePurchase()}
+                          className="w-full h-12 justify-between bg-primary text-primary-foreground hover:shadow-md transition-all duration-200 border-gray-300 dark:border-gray-600"
+                          onClick={() => handlePurchase({name: "Vĩnh viễn", duration: "Vĩnh viễn", amount: tool.price, durationValue: 3, rawDuration: -1})}
                           data-testid="button-purchase-permanent"
                         >
                           <span>Mua Vĩnh Viễn</span>
@@ -360,7 +381,7 @@ export default function ToolDetails() {
                         <div>
                           <h3 className="font-semibold mb-3">Hình ảnh demo</h3>
                           <div className="space-y-4">
-                            {tool.imageUrl && (
+                            {tool.imageUrl && tool.imageUrl !== "/static/tool/default.jpg" && (
                               <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
                                 <img 
                                   src={tool.imageUrl} 
@@ -463,9 +484,16 @@ export default function ToolDetails() {
                 </div>
                 <div>
                   <h4 className="font-semibold" data-testid="text-purchase-tool-name">{tool.name}</h4>
-                  <p className="text-2xl font-bold text-primary" data-testid="text-purchase-tool-price">
-                    {Number(tool.price).toLocaleString('vi-VN')}₫
-                  </p>
+                  {selectedPlan && (
+                    <>
+                      <p className="text-2xl font-bold text-primary" data-testid="text-purchase-tool-price">
+                        {Number(selectedPlan.amount).toLocaleString('vi-VN')}₫
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {selectedPlan.name}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
               
@@ -502,10 +530,10 @@ export default function ToolDetails() {
               </Button>
               <Button 
                 onClick={handleConfirmPurchase}
-                disabled={purchaseMutation.isPending}
+                disabled={createOrderMutation.isPending}
                 data-testid="button-confirm-purchase"
               >
-                {purchaseMutation.isPending ? "Đang xử lý..." : "Xác nhận mua"}
+                {createOrderMutation.isPending ? "Đang xử lý..." : "Xác nhận mua"}
               </Button>
             </DialogFooter>
           </DialogContent>

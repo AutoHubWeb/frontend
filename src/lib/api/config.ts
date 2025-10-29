@@ -91,6 +91,16 @@ export const API_ENDPOINTS = {
   PROXY: {
     BASE: '/api/v1/proxy',
   },
+  
+  // VPS endpoints
+  VPS: {
+    BASE: '/api/v1/vps',
+  },
+  
+  // Orders endpoints
+  ORDERS: {
+    BASE: '/api/v1/orders',
+  },
 } as const;
 
 // HTTP Methods
@@ -170,6 +180,11 @@ export const QUERY_KEYS = {
   PROXY: {
     ALL: ['proxy'] as const,
     LIST: ['proxy', 'list'] as const,
+  },
+  
+  ORDERS: {
+    ALL: ['orders'] as const,
+    LIST: ['orders', 'list'] as const,
   },
 } as const;
 
