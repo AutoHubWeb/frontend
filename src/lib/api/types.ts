@@ -360,6 +360,16 @@ export interface Proxy {
   updatedAt?: string;
 }
 
+// Order Proxy type (based on API response data)
+export interface OrderProxy extends Proxy {
+  name: string;
+  description: string;
+  soldQuantity: number;
+  viewCount: number;
+  inventory: number;
+  price: number;
+}
+
 // VPS types
 export interface VPS {
   id: string;
@@ -380,7 +390,26 @@ export interface VPS {
   updatedAt?: string;
 }
 
+// Order VPS type (based on API response data)
+export interface OrderVPS extends VPS {
+  // Additional fields if needed
+}
+
+// Order Tool type (based on API response data)
+export interface OrderTool extends Tool {
+  keyValue?: string;
+}
+
 // Order types
+export enum ORDER_STATUS_ENUM {
+  PENDING = 'pending', // chờ xử lý
+  SETUP = 'setup', // đang setup
+  CANCEL = 'cancel', // hủy
+  SUCCESS = 'success', // thành công
+  OVERDUE = 'overdue', // quá hạn
+  FAIL = 'fail', // thất bại
+}
+
 export interface CreateOrderRequest {
   type: 'tool' | 'vps' | 'proxy';
   toolId?: string;
@@ -395,13 +424,42 @@ export interface OrderHistory {
   description: string;
 }
 
+export interface ToolOrderDetails {
+  name: string;
+  price: number;
+  duration: number;
+  apiKey?: string;
+  expiredAt?: string;
+  changeApiKeyAt?: string;
+}
+
+export interface OrderItem {
+  id: string;
+  code: string;
+  createdAt: string;
+  updatedAt: string;
+  totalPrice: number;
+  status: string;
+  note: string;
+  type: 'tool' | 'vps' | 'proxy';
+  tool?: OrderTool;
+  vps?: OrderVPS;
+  proxy?: OrderProxy;
+  toolOrder?: ToolOrderDetails;
+  histories?: OrderHistory[];
+}
+
 export interface OrderResponse {
   code: string;
   totalPrice: number;
   status: string;
   note: string;
-  type: 'tool' | 'vps';
+  type: 'tool' | 'vps' | 'proxy';
   histories: OrderHistory[];
+  tool?: OrderTool;
+  vps?: OrderVPS;
+  proxy?: OrderProxy;
+  toolOrder?: ToolOrderDetails;
 }
 
 // WebSocket types

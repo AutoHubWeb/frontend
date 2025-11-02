@@ -188,7 +188,7 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link href="/purchased-tools" className="flex items-center">
                         <Wrench className="mr-2 h-4 w-4 text-orange-500" />
-                        <span>Quản Lý Tool</span>
+                        <span>Quản Lý Công Cụ</span>
                       </Link>
                     </DropdownMenuItem>
                     {(user as any)?.isAdmin && (

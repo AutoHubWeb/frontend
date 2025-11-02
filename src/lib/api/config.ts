@@ -100,6 +100,7 @@ export const API_ENDPOINTS = {
   // Orders endpoints
   ORDERS: {
     BASE: '/api/v1/orders',
+    ME: '/api/v1/orders/me',
   },
 } as const;
 

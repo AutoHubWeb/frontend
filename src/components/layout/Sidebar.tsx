@@ -72,14 +72,22 @@ export function Sidebar() {
             {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
           </AvatarFallback>
         </Avatar>
-        <div>
-          <p className="font-semibold text-sm" data-testid="text-user-name">
+        <div className="min-w-0"> {/* Added min-w-0 to allow text truncation */}
+          <p 
+            className="font-semibold text-sm truncate" 
+            data-testid="text-user-name"
+            title={user?.firstName && user?.lastName 
+              ? `${user.firstName} ${user.lastName}`
+              : user?.email || "User"}
+          >
             {user?.firstName && user?.lastName 
               ? `${user.firstName} ${user.lastName}`
               : user?.email || "User"}
           </p>
-          <p className="text-xs text-muted-foreground">
-            {user?.isAdmin ? "Quản trị viên" : "Thành viên"}
+          <p className="text-xs text-muted-foreground truncate" title={user?.email}>
+            {user?.email ? (
+              <span className="truncate">{user.email}</span>
+            ) : user?.isAdmin ? "Quản trị viên" : "Thành viên"}
           </p>
           <p className="text-xs font-medium text-emerald-600" data-testid="text-user-balance">
             Số dư: {Number(user?.balance || 0).toLocaleString('vi-VN')}₫

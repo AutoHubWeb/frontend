@@ -7,15 +7,18 @@ import { apiClient } from '../client';
 import { API_ENDPOINTS } from '../config';
 import { 
   CreateOrderRequest,
-  OrderResponse,
-  ApiResponse 
+  OrderItem,
+  ApiResponse,
+  OrderTool,
+  OrderVPS,
+  OrderProxy
 } from '../types';
 
 export class OrderService {
   /**
    * Create a new order
    */
-  async createOrder(orderData: CreateOrderRequest): Promise<ApiResponse<OrderResponse>> {
+  async createOrder(orderData: CreateOrderRequest): Promise<ApiResponse<OrderItem>> {
     try {
       const response: any = await apiClient.post<any>(API_ENDPOINTS.ORDERS.BASE, orderData);
       
@@ -29,11 +32,18 @@ export class OrderService {
           success: true,
           message: response.message || 'Đặt hàng thành công',
           data: response.data ? {
+            id: response.data.id,
             code: response.data.code,
+            createdAt: response.data.createdAt,
+            updatedAt: response.data.updatedAt,
             totalPrice: response.data.totalPrice,
             status: response.data.status,
             note: response.data.note,
             type: response.data.type,
+            tool: response.data.tool as OrderTool,
+            vps: response.data.vps as OrderVPS,
+            proxy: response.data.proxy as OrderProxy,
+            toolOrder: response.data.toolOrder,
             histories: response.data.histories || []
           } : undefined
         };
@@ -43,11 +53,18 @@ export class OrderService {
           success: true,
           message: response.message || 'Đặt hàng thành công',
           data: {
+            id: response.data.id,
             code: response.data.code,
+            createdAt: response.data.createdAt,
+            updatedAt: response.data.updatedAt,
             totalPrice: response.data.totalPrice,
             status: response.data.status,
             note: response.data.note,
             type: response.data.type,
+            tool: response.data.tool as OrderTool,
+            vps: response.data.vps as OrderVPS,
+            proxy: response.data.proxy as OrderProxy,
+            toolOrder: response.data.toolOrder,
             histories: response.data.histories || []
           }
         };
@@ -73,7 +90,7 @@ export class OrderService {
   /**
    * Get order by ID
    */
-  async getOrderById(id: string): Promise<ApiResponse<OrderResponse>> {
+  async getOrderById(id: string): Promise<ApiResponse<OrderItem>> {
     try {
       const response: any = await apiClient.get<any>(`${API_ENDPOINTS.ORDERS.BASE}/${id}`);
       
@@ -83,11 +100,18 @@ export class OrderService {
           success: true,
           message: response.message || 'Lấy thông tin đơn hàng thành công',
           data: response.data ? {
+            id: response.data.id,
             code: response.data.code,
+            createdAt: response.data.createdAt,
+            updatedAt: response.data.updatedAt,
             totalPrice: response.data.totalPrice,
             status: response.data.status,
             note: response.data.note,
             type: response.data.type,
+            tool: response.data.tool as OrderTool,
+            vps: response.data.vps as OrderVPS,
+            proxy: response.data.proxy as OrderProxy,
+            toolOrder: response.data.toolOrder,
             histories: response.data.histories || []
           } : undefined
         };
@@ -97,11 +121,18 @@ export class OrderService {
           success: true,
           message: response.message || 'Lấy thông tin đơn hàng thành công',
           data: {
+            id: response.data.id,
             code: response.data.code,
+            createdAt: response.data.createdAt,
+            updatedAt: response.data.updatedAt,
             totalPrice: response.data.totalPrice,
             status: response.data.status,
             note: response.data.note,
             type: response.data.type,
+            tool: response.data.tool as OrderTool,
+            vps: response.data.vps as OrderVPS,
+            proxy: response.data.proxy as OrderProxy,
+            toolOrder: response.data.toolOrder,
             histories: response.data.histories || []
           }
         };
@@ -127,36 +158,58 @@ export class OrderService {
   /**
    * Get user orders
    */
-  async getUserOrders(): Promise<ApiResponse<OrderResponse[]>> {
+  async getUserOrders(keyword?: string): Promise<ApiResponse<OrderItem[]>> {
     try {
-      const response: any = await apiClient.get<any>(API_ENDPOINTS.ORDERS.BASE);
+      // Prepare query parameters
+      const params: Record<string, string> = {};
+      if (keyword) {
+        params.keyword = keyword;
+      }
+      
+      const response: any = await apiClient.get<any>(API_ENDPOINTS.ORDERS.ME, params);
       
       // Transform the response to match our expected format
       if (response && response.success === true) {
+        const items = response.data?.items || response.data || [];
         return {
           success: true,
           message: response.message || 'Lấy danh sách đơn hàng thành công',
-          data: response.data ? (Array.isArray(response.data) ? response.data : [response.data]).map((item: any) => ({
+          data: Array.isArray(items) ? items.map((item: any) => ({
+            id: item.id,
             code: item.code,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
             totalPrice: item.totalPrice,
             status: item.status,
             note: item.note,
             type: item.type,
+            tool: item.tool as OrderTool,
+            vps: item.vps as OrderVPS,
+            proxy: item.proxy as OrderProxy,
+            toolOrder: item.toolOrder,
             histories: item.histories || []
           })) : []
         };
       } else if (response && (response.statusCode === 200 || response.status === 200) && response.data) {
         // Handle case where API returns 200 status but different structure
-        const dataArray = Array.isArray(response.data) ? response.data : [response.data];
+        const items = response.data?.items || response.data || [];
+        const dataArray = Array.isArray(items) ? items : [items];
         return {
           success: true,
           message: response.message || 'Lấy danh sách đơn hàng thành công',
           data: dataArray.map((item: any) => ({
+            id: item.id,
             code: item.code,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
             totalPrice: item.totalPrice,
             status: item.status,
             note: item.note,
             type: item.type,
+            tool: item.tool as OrderTool,
+            vps: item.vps as OrderVPS,
+            proxy: item.proxy as OrderProxy,
+            toolOrder: item.toolOrder,
             histories: item.histories || []
           }))
         };
@@ -175,6 +228,60 @@ export class OrderService {
         success: false,
         message: error.message || 'Không thể kết nối đến máy chủ',
         data: []
+      };
+    }
+  }
+
+  /**
+   * Change order key
+   */
+  async changeKey(orderId: string, keyData: { apiKey: string }): Promise<ApiResponse<OrderItem>> {
+    try {
+      const response: any = await apiClient.put<any>(`${API_ENDPOINTS.ORDERS.BASE}/${orderId}/update-api-key`, keyData);
+      
+      // Log the response for debugging
+      console.log('Change Key API Response:', response);
+      
+      // Transform the response to match our expected format
+      if (response && (response.success === true || response.status === 200 || response.statusCode === 200)) {
+        // Handle both success=true and HTTP 200 status cases
+        const message = response.message || 'Cập nhật key thành công';
+        const data = response.data || response;
+        
+        return {
+          success: true,
+          message: message,
+          data: data ? {
+            id: data.id,
+            code: data.code,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            totalPrice: data.totalPrice,
+            status: data.status,
+            note: data.note,
+            type: data.type,
+            tool: data.tool as OrderTool,
+            vps: data.vps as OrderVPS,
+            proxy: data.proxy as OrderProxy,
+            toolOrder: data.toolOrder,
+            histories: data.histories || []
+          } : undefined
+        };
+      } else {
+        // Handle error responses
+        return {
+          success: false,
+          message: response?.message || 'Không thể cập nhật key',
+          data: undefined
+        };
+      }
+    } catch (error: any) {
+      // Handle network errors or other exceptions
+      console.error('Change Key API Error:', error);
+      return {
+        success: false,
+        message: error.message || 'Không thể kết nối đến máy chủ',
+        data: undefined
       };
     }
   }

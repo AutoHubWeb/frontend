@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../config';
 import { 
   CreateOrderRequest,
-  OrderResponse,
+  OrderItem,
   QueryConfig,
   MutationConfig 
 } from '../types';
@@ -15,11 +15,11 @@ import { parseApiError } from '../errors';
 import { orderService } from '../services/order.service';
 
 // Query hooks
-export const useUserOrders = (options?: QueryConfig) => {
+export const useUserOrders = (keyword?: string, options?: QueryConfig) => {
   return useQuery({
-    queryKey: ['orders'],
+    queryKey: ['orders', 'me', keyword],
     queryFn: async () => {
-      const response = await orderService.getUserOrders();
+      const response = await orderService.getUserOrders(keyword);
       if (!response.success) {
         throw new Error(response.message);
       }
@@ -51,7 +51,7 @@ export const useCreateOrder = (options?: MutationConfig) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (orderData: CreateOrderRequest): Promise<OrderResponse> => {
+    mutationFn: async (orderData: CreateOrderRequest): Promise<OrderItem> => {
       const response = await orderService.createOrder(orderData);
       if (!response.success) {
         throw new Error(response.message);
@@ -59,9 +59,34 @@ export const useCreateOrder = (options?: MutationConfig) => {
       return response.data!;
     },
     onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', 'me'] });
       queryClient.invalidateQueries({ queryKey: ['tools'] });
       queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
+      options?.onSuccess?.(data);
+    },
+    onError: (error, variables, context) => {
+      const apiError = parseApiError(error);
+      options?.onError?.(apiError);
+    },
+    onSettled: options?.onSettled,
+    retry: options?.retry ?? false,
+  });
+};
+
+export const useChangeOrderKey = (options?: MutationConfig) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ orderId, apiKey }: { orderId: string; apiKey: string }) => {
+      const response = await orderService.changeKey(orderId, { apiKey });
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ['orders', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', variables.orderId] });
       options?.onSuccess?.(data);
     },
     onError: (error, variables, context) => {
