@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -26,7 +26,11 @@ import {
   Table,
   Eye,
   EyeOff,
-  Search
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react";
 import {
   Dialog,
@@ -45,9 +49,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import type { Tool, OrderItem } from "@/lib/api/types";
+import type { Tool, OrderItem, PaginatedResponse } from "@/lib/api/types";
 import { ORDER_STATUS_ENUM } from "@/lib/api/types";
-import { useUserOrders, useChangeOrderKey } from "@/lib/api/hooks/useOrders";
+import { useUserOrders, useChangeOrderKey, useDownloadTool } from "@/lib/api/hooks/useOrders";
 
 export default function PurchasedTools() {
   const { isAuthenticated } = useAuth();
@@ -59,9 +63,21 @@ export default function PurchasedTools() {
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { data: orders, isLoading } = useUserOrders(searchKeyword || undefined);
+  const { data: ordersData, isLoading } = useUserOrders(searchKeyword || undefined, currentPage, itemsPerPage);
+  
+  // Debug: Log ordersData and currentPage to see what we're getting
+  useEffect(() => {
+    if (ordersData) {
+      console.log('Orders Data:', ordersData);
+    }
+    console.log('Current Page:', currentPage);
+  }, [ordersData, currentPage]);
+
   const changeKeyMutation = useChangeOrderKey();
+  const downloadToolMutation = useDownloadTool();
 
   // Function to get product name based on order type
   const getProductName = (order: OrderItem) => {
@@ -108,9 +124,9 @@ export default function PurchasedTools() {
 
   // Function to filter expired/inactive orders
   const getExpiredOrders = () => {
-    if (!orders) return [];
+    if (!ordersData?.data) return [];
     
-    return orders.filter(order => 
+    return ordersData.data.filter((order: OrderItem) => 
       order.status === ORDER_STATUS_ENUM.OVERDUE || 
       order.status === ORDER_STATUS_ENUM.CANCEL || 
       order.status === ORDER_STATUS_ENUM.FAIL
@@ -153,6 +169,19 @@ export default function PurchasedTools() {
     }
   };
 
+  // Function to handle download tool
+  const handleDownloadTool = async (orderId: string) => {
+    try {
+      await downloadToolMutation.mutateAsync(orderId);
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể tải xuống công cụ",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Function to toggle API key visibility
   const toggleApiKeyVisibility = (orderId: string) => {
     setShowApiKey(prev => ({
@@ -170,29 +199,32 @@ export default function PurchasedTools() {
     });
   };
 
-  // Filter orders based on search keyword
-  const filteredOrders = useMemo(() => {
-    if (!orders || !searchKeyword) return orders || [];
-    
-    const keyword = searchKeyword.toLowerCase();
-    return orders.filter(order => {
-      // Search in order code
-      if (order.code.toLowerCase().includes(keyword)) return true;
-      
-      // Search in product name
-      const productName = getProductName(order).toLowerCase();
-      if (productName.includes(keyword)) return true;
-      
-      // Search in tool plan name
-      const toolPlanName = getToolPlanName(order)?.toLowerCase();
-      if (toolPlanName && toolPlanName.includes(keyword)) return true;
-      
-      // Search in order note
-      if (order.note && order.note.toLowerCase().includes(keyword)) return true;
-      
-      return false;
-    });
-  }, [orders, searchKeyword, getProductName, getToolPlanName]);
+  // Pagination functions
+  const goToFirstPage = () => {
+    console.log('Going to first page');
+    setCurrentPage(1);
+  };
+
+  const goToPreviousPage = () => {
+    console.log('Going to previous page, current page:', currentPage);
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    console.log('Going to next page, current page:', currentPage, 'total pages:', ordersData?.meta?.totalPages);
+    if (ordersData?.meta && currentPage < ordersData.meta.totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToLastPage = () => {
+    console.log('Going to last page, total pages:', ordersData?.meta?.totalPages);
+    if (ordersData?.meta) {
+      setCurrentPage(ordersData.meta.totalPages);
+    }
+  };
 
   return (
     <Layout showSidebar={isAuthenticated}>
@@ -243,7 +275,7 @@ export default function PurchasedTools() {
                 </Card>
               ))}
             </div>
-          ) : filteredOrders?.length === 0 ? (
+          ) : expiredOrders.length === 0 && (!ordersData?.data || ordersData.data.length === 0) ? (
             <div className="text-center py-16">
               <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
               <h3 className="text-2xl font-bold mb-4">
@@ -274,7 +306,7 @@ export default function PurchasedTools() {
                 >
                   <h2 className="text-2xl font-bold mb-6 text-red-600">Đã hết hạn ({expiredOrders.length})</h2>
                   <div className="space-y-4">
-                    {expiredOrders.map((order, index) => {
+                    {expiredOrders.map((order: OrderItem, index: number) => {
                       const statusInfo = getStatusInfo(order.status);
                       const toolPlanName = getToolPlanName(order);
                       
@@ -336,110 +368,189 @@ export default function PurchasedTools() {
                   <Table className="w-6 h-6 mr-2" />
                   Lịch sử đơn hàng
                 </h2>
-                <Card>
-                  <CardContent className="p-0">
-                    {isLoading ? (
-                      <div className="p-6">
-                        <Skeleton className="w-full h-10 mb-2" />
-                        <Skeleton className="w-full h-10 mb-2" />
-                        <Skeleton className="w-full h-10" />
-                      </div>
-                    ) : filteredOrders && filteredOrders.length > 0 ? (
-                      <UITable>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Mã đơn hàng</TableHead>
-                            <TableHead>Sản phẩm</TableHead>
-                            <TableHead>Gói</TableHead>
-                            <TableHead>Loại</TableHead>
-                            <TableHead>Ngày tạo</TableHead>
-                            <TableHead>Trạng thái</TableHead>
-                            <TableHead>Tổng tiền</TableHead>
-                            <TableHead>API Key</TableHead>
-                            <TableHead>Hành động</TableHead>
-                            <TableHead>Ghi chú</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredOrders.map((order, index) => {
-                            const statusInfo = getStatusInfo(order.status);
-                            const toolPlanName = getToolPlanName(order);
-                            const isToolOrder = order.type === 'tool';
-                            const apiKey = order.toolOrder?.apiKey || '';
-                            
-                            return (
-                              <TableRow key={order.id}>
-                                <TableCell className="font-medium">{order.code}</TableCell>
-                                <TableCell>{getProductName(order)}</TableCell>
-                                <TableCell>{toolPlanName || 'N/A'}</TableCell>
-                                <TableCell>
-                                  <Badge variant="outline">
-                                    {order.type === 'tool' ? 'Công cụ' : order.type === 'vps' ? 'VPS' : 'Proxy'}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>{getOrderDate(order)}</TableCell>
-                                <TableCell>
-                                  <Badge 
-                                    variant={statusInfo.variant as any}
-                                    className={statusInfo.className}
-                                  >
-                                    {statusInfo.text}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>{Number(order.totalPrice).toLocaleString('vi-VN')}₫</TableCell>
-                                <TableCell>
-                                  {isToolOrder && apiKey ? (
-                                    <div className="flex items-center space-x-2">
-                                      <span className="font-mono text-sm">
-                                        {showApiKey[order.id] ? apiKey : '••••••••'}
-                                      </span>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => toggleApiKeyVisibility(order.id)}
-                                      >
-                                        {showApiKey[order.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => copyApiKeyToClipboard(apiKey, order.id)}
-                                      >
-                                        <Copy className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  ) : isToolOrder ? (
-                                    <span className="text-muted-foreground">Chưa có key</span>
-                                  ) : (
-                                    <span className="text-muted-foreground">N/A</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {isToolOrder && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleChangeKeyClick(order)}
-                                    >
-                                      <Key className="w-4 h-4 mr-1" />
-                                      Đổi Key
-                                    </Button>
-                                  )}
-                                </TableCell>
-                                <TableCell>{order.note || 'Không có ghi chú'}</TableCell>
+                <div className="overflow-x-auto">
+                  <Card>
+                    <CardContent className="p-0">
+                      {isLoading ? (
+                        <div className="p-6">
+                          <Skeleton className="w-full h-10 mb-2" />
+                          <Skeleton className="w-full h-10 mb-2" />
+                          <Skeleton className="w-full h-10" />
+                        </div>
+                      ) : ordersData?.data && ordersData.data.length > 0 ? (
+                        <>
+                          <UITable>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="whitespace-nowrap">Mã đơn hàng</TableHead>
+                                <TableHead className="whitespace-nowrap">Sản phẩm</TableHead>
+                                <TableHead className="whitespace-nowrap">Gói</TableHead>
+                                <TableHead className="whitespace-nowrap">Loại</TableHead>
+                                <TableHead className="whitespace-nowrap">Ngày tạo</TableHead>
+                                <TableHead className="whitespace-nowrap">Trạng thái</TableHead>
+                                <TableHead className="whitespace-nowrap">Tổng tiền</TableHead>
+                                <TableHead className="whitespace-nowrap">API Key</TableHead>
+                                <TableHead className="whitespace-nowrap">Hành động</TableHead>
+                                <TableHead className="whitespace-nowrap">Ghi chú</TableHead>
                               </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </UITable>
-                    ) : (
-                      <div className="p-8 text-center text-muted-foreground">
-                        <Table className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p>Chưa có đơn hàng nào</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                            </TableHeader>
+                            <TableBody>
+                              {ordersData.data.map((order: OrderItem, index: number) => {
+                                const statusInfo = getStatusInfo(order.status);
+                                const toolPlanName = getToolPlanName(order);
+                                const isToolOrder = order.type === 'tool';
+                                const apiKey = order.toolOrder?.apiKey || '';
+                                
+                                return (
+                                  <TableRow key={order.id} className="align-top min-h-[73px]">
+                                    <TableCell className="font-medium whitespace-nowrap">{order.code}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{getProductName(order)}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{toolPlanName || 'N/A'}</TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline">
+                                        {order.type === 'tool' ? 'Công cụ' : order.type === 'vps' ? 'VPS' : 'Proxy'}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">{getOrderDate(order)}</TableCell>
+                                    <TableCell>
+                                      <Badge 
+                                        variant={statusInfo.variant as any}
+                                        className={statusInfo.className}
+                                      >
+                                        {statusInfo.text}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">{Number(order.totalPrice).toLocaleString('vi-VN')}₫</TableCell>
+                                    <TableCell>
+                                      {isToolOrder && apiKey ? (
+                                        <div className="flex items-center space-x-2">
+                                          <span className="font-mono text-sm">
+                                            {showApiKey[order.id] ? apiKey : '••••••••'}
+                                          </span>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => toggleApiKeyVisibility(order.id)}
+                                          >
+                                            {showApiKey[order.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => copyApiKeyToClipboard(apiKey, order.id)}
+                                          >
+                                            <Copy className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                      ) : isToolOrder ? (
+                                        <span className="text-muted-foreground">Chưa có key</span>
+                                      ) : (
+                                        <span className="text-muted-foreground">N/A</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="space-y-2">
+                                      {isToolOrder && (
+                                        <div className="flex flex-col gap-2">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleChangeKeyClick(order)}
+                                            className="w-full"
+                                          >
+                                            <Key className="w-4 h-4 mr-1" />
+                                            Đổi Key
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={() => handleDownloadTool(order.id)}
+                                            disabled={downloadToolMutation.isPending}
+                                            className="w-full bg-green-600 hover:bg-green-700"
+                                          >
+                                            <Download className="w-4 h-4 mr-1" />
+                                            Tải Xuống
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="max-w-xs">{order.note || 'Không có ghi chú'}</TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </UITable>
+                          
+                          {/* Pagination */}
+                          {ordersData.meta && ordersData.data && ordersData.data.length > 0 && (
+                            <div className="flex items-center justify-between px-4 py-3 border-t">
+                              <div className="text-sm text-muted-foreground">
+                                Tổng cộng {ordersData.meta.total} đơn hàng
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={goToFirstPage}
+                                  disabled={currentPage === 1}
+                                >
+                                  <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={goToPreviousPage}
+                                  disabled={currentPage === 1}
+                                >
+                                  <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <div className="text-sm font-medium">
+                                  Trang {currentPage} / {ordersData.meta.totalPages}
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={goToNextPage}
+                                  disabled={currentPage === ordersData.meta.totalPages}
+                                >
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={goToLastPage}
+                                  disabled={currentPage === ordersData.meta.totalPages}
+                                >
+                                  <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-muted-foreground">Hiển thị:</span>
+                                <select
+                                  value={itemsPerPage}
+                                  onChange={(e) => {
+                                    setItemsPerPage(Number(e.target.value));
+                                    setCurrentPage(1); // Reset to first page when changing items per page
+                                  }}
+                                  className="h-8 rounded border text-sm"
+                                >
+                                  <option value="5">5</option>
+                                  <option value="10">10</option>
+                                  <option value="20">20</option>
+                                  <option value="50">50</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="p-8 text-center text-muted-foreground">
+                          <Table className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>Chưa có đơn hàng nào</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </motion.div>
             </div>
           )}

@@ -9,21 +9,23 @@ import {
   CreateOrderRequest,
   OrderItem,
   QueryConfig,
-  MutationConfig 
+  MutationConfig,
+  PaginatedResponse
 } from '../types';
 import { parseApiError } from '../errors';
 import { orderService } from '../services/order.service';
 
 // Query hooks
-export const useUserOrders = (keyword?: string, options?: QueryConfig) => {
+export const useUserOrders = (keyword?: string, page?: number, limit?: number, options?: QueryConfig) => {
   return useQuery({
-    queryKey: ['orders', 'me', keyword],
+    queryKey: ['orders', 'me', keyword, page, limit],
     queryFn: async () => {
-      const response = await orderService.getUserOrders(keyword);
+      const response = await orderService.getUserOrders(keyword, page, limit);
       if (!response.success) {
         throw new Error(response.message);
       }
-      return response.data || [];
+
+      return response.data;
     },
     staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
     ...options,
@@ -87,6 +89,31 @@ export const useChangeOrderKey = (options?: MutationConfig) => {
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ['orders', 'me'] });
       queryClient.invalidateQueries({ queryKey: ['orders', variables.orderId] });
+      options?.onSuccess?.(data);
+    },
+    onError: (error, variables, context) => {
+      const apiError = parseApiError(error);
+      options?.onError?.(apiError);
+    },
+    onSettled: options?.onSettled,
+    retry: options?.retry ?? false,
+  });
+};
+
+export const useDownloadTool = (options?: MutationConfig) => {
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      const response = await orderService.downloadTool(orderId);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+    onSuccess: (data, variables, context) => {
+      // Open download URL in new tab
+      if (data?.downloadUrl) {
+        window.open(data.downloadUrl, '_blank');
+      }
       options?.onSuccess?.(data);
     },
     onError: (error, variables, context) => {

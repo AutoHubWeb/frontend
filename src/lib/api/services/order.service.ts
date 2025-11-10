@@ -11,7 +11,9 @@ import {
   ApiResponse,
   OrderTool,
   OrderVPS,
-  OrderProxy
+  OrderProxy,
+  DownloadToolResponse,
+  PaginatedResponse
 } from '../types';
 
 export class OrderService {
@@ -158,12 +160,18 @@ export class OrderService {
   /**
    * Get user orders
    */
-  async getUserOrders(keyword?: string): Promise<ApiResponse<OrderItem[]>> {
+  async getUserOrders(keyword?: string, page?: number, limit?: number): Promise<ApiResponse<PaginatedResponse<OrderItem>>> {
     try {
       // Prepare query parameters
       const params: Record<string, string> = {};
       if (keyword) {
         params.keyword = keyword;
+      }
+      if (page !== undefined) {
+        params.page = page.toString();
+      }
+      if (limit !== undefined) {
+        params.limit = limit.toString();
       }
       
       const response: any = await apiClient.get<any>(API_ENDPOINTS.ORDERS.ME, params);
@@ -171,54 +179,98 @@ export class OrderService {
       // Transform the response to match our expected format
       if (response && response.success === true) {
         const items = response.data?.items || response.data || [];
+        const total = response.data?.meta.total || 0;
+        const currentPage = response.data?.meta.page || 1;
+        const requestedLimit = limit || 10;
+        const currentLimit = response.data?.limit || requestedLimit;
+        const totalPages = response.data?.totalPages || Math.ceil(total / currentLimit);
+
+        const meta = {
+          total: total,
+          page: currentPage,
+          limit: currentLimit,
+          totalPages: totalPages,
+          hasNext: currentPage < totalPages,
+          hasPrevious: currentPage > 1
+        };
+        
         return {
           success: true,
           message: response.message || 'Lấy danh sách đơn hàng thành công',
-          data: Array.isArray(items) ? items.map((item: any) => ({
-            id: item.id,
-            code: item.code,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-            totalPrice: item.totalPrice,
-            status: item.status,
-            note: item.note,
-            type: item.type,
-            tool: item.tool as OrderTool,
-            vps: item.vps as OrderVPS,
-            proxy: item.proxy as OrderProxy,
-            toolOrder: item.toolOrder,
-            histories: item.histories || []
-          })) : []
+          data: {
+            data: Array.isArray(items) ? items.map((item: any) => ({
+              id: item.id,
+              code: item.code,
+              createdAt: item.createdAt,
+              updatedAt: item.updatedAt,
+              totalPrice: item.totalPrice,
+              status: item.status,
+              note: item.note,
+              type: item.type,
+              tool: item.tool as OrderTool,
+              vps: item.vps as OrderVPS,
+              proxy: item.proxy as OrderProxy,
+              toolOrder: item.toolOrder,
+              histories: item.histories || []
+            })) : [],
+            meta
+          }
         };
       } else if (response && (response.statusCode === 200 || response.status === 200) && response.data) {
-        // Handle case where API returns 200 status but different structure
         const items = response.data?.items || response.data || [];
-        const dataArray = Array.isArray(items) ? items : [items];
+        const total = response.data?.meta.total || 0;
+        const currentPage = response.data?.meta.page || 1;
+        const requestedLimit = limit || 10;
+        const currentLimit = response.data?.limit || requestedLimit;
+        const totalPages = response.data?.totalPages || Math.ceil(total / currentLimit);
+        
+        const meta = {
+          total: total,
+          page: currentPage,
+          limit: currentLimit,
+          totalPages: totalPages,
+          hasNext: currentPage < totalPages,
+          hasPrevious: currentPage > 1
+        };
+        
         return {
           success: true,
           message: response.message || 'Lấy danh sách đơn hàng thành công',
-          data: dataArray.map((item: any) => ({
-            id: item.id,
-            code: item.code,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-            totalPrice: item.totalPrice,
-            status: item.status,
-            note: item.note,
-            type: item.type,
-            tool: item.tool as OrderTool,
-            vps: item.vps as OrderVPS,
-            proxy: item.proxy as OrderProxy,
-            toolOrder: item.toolOrder,
-            histories: item.histories || []
-          }))
+          data: {
+            data: Array.isArray(items) ? items.map((item: any) => ({
+              id: item.id,
+              code: item.code,
+              createdAt: item.createdAt,
+              updatedAt: item.updatedAt,
+              totalPrice: item.totalPrice,
+              status: item.status,
+              note: item.note,
+              type: item.type,
+              tool: item.tool as OrderTool,
+              vps: item.vps as OrderVPS,
+              proxy: item.proxy as OrderProxy,
+              toolOrder: item.toolOrder,
+              histories: item.histories || []
+            })) : [],
+            meta
+          }
         };
       } else {
         // Handle error responses
         return {
           success: false,
           message: response?.message || 'Không thể lấy danh sách đơn hàng',
-          data: []
+          data: {
+            data: [],
+            meta: {
+              total: 0,
+              page: 1,
+              limit: 10,
+              totalPages: 1,
+              hasNext: false,
+              hasPrevious: false
+            }
+          }
         };
       }
     } catch (error: any) {
@@ -227,7 +279,17 @@ export class OrderService {
       return {
         success: false,
         message: error.message || 'Không thể kết nối đến máy chủ',
-        data: []
+        data: {
+          data: [],
+          meta: {
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false
+          }
+        }
       };
     }
   }
@@ -278,6 +340,45 @@ export class OrderService {
     } catch (error: any) {
       // Handle network errors or other exceptions
       console.error('Change Key API Error:', error);
+      return {
+        success: false,
+        message: error.message || 'Không thể kết nối đến máy chủ',
+        data: undefined
+      };
+    }
+  }
+
+  /**
+   * Download tool for order
+   */
+  async downloadTool(orderId: string): Promise<ApiResponse<{ downloadUrl: string }>> {
+    try {
+      const response: any = await apiClient.get<any>(`${API_ENDPOINTS.ORDERS.BASE}/${orderId}/download`);
+      
+      // Transform the response to match our expected format
+      if (response && (response.success === true || response.status === 200 || response.statusCode === 200)) {
+        // Handle both success=true and HTTP 200 status cases
+        const message = response.message || 'Lấy link tải thành công';
+        const data = response.data || response;
+        
+        return {
+          success: true,
+          message: message,
+          data: data ? {
+            downloadUrl: data.downloadUrl
+          } : undefined
+        };
+      } else {
+        // Handle error responses
+        return {
+          success: false,
+          message: response?.message || 'Không thể lấy link tải',
+          data: undefined
+        };
+      }
+    } catch (error: any) {
+      // Handle network errors or other exceptions
+      console.error('Download Tool API Error:', error);
       return {
         success: false,
         message: error.message || 'Không thể kết nối đến máy chủ',

@@ -25,7 +25,7 @@ export interface TransactionItem {
   balanceBefore: number;
   balanceAfter: number;
   action: string;
-  note: string;
+  description: string; // Changed from 'note' to 'description' to match API response
   user: {
     id: {
       type: string;
@@ -39,6 +39,10 @@ export interface UserTransactionsResponse {
   meta: {
     total: number;
     page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
   };
 }
 
@@ -114,6 +118,13 @@ export class TransactionService {
       // Make the API call using fetch directly to handle the specific response format
       const url = `${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS.ME}`;
       
+      // Prepare query parameters
+      const queryParams = new URLSearchParams();
+      if (params?.page) queryParams.append('page', params.page.toString());
+      if (params?.limit) queryParams.append('limit', params.limit.toString());
+      
+      const fullUrl = queryParams.toString() ? `${url}?${queryParams.toString()}` : url;
+      
       // Prepare headers
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -125,7 +136,7 @@ export class TransactionService {
         headers['Authorization'] = `Bearer ${tokens.accessToken}`;
       }
       
-      const response = await fetch(url, {
+      const response = await fetch(fullUrl, {
         method: 'GET',
         headers,
       });
@@ -138,17 +149,62 @@ export class TransactionService {
       const rawData = await response.json();
       
       // Transform the response to match the expected format
-      return {
-        success: true,
-        message: rawData.message || 'Success',
-        data: rawData.data || { items: [], meta: { total: 0, page: 1 } }
-      };
+      if (rawData && (rawData.success === true || rawData.statusCode === 200 || rawData.status === 200)) {
+        const items = rawData.data?.items || rawData.data || [];
+        const total = rawData.data?.meta?.total || items.length;
+        const currentPage = rawData.data?.meta?.page || params?.page || 1;
+        const requestedLimit = params?.limit || 10;
+        const currentLimit = rawData.data?.meta?.limit || requestedLimit;
+        const totalPages = rawData.data?.meta?.totalPages || Math.ceil(total / currentLimit);
+        
+        return {
+          success: true,
+          message: rawData.message || 'Success',
+          data: {
+            items: Array.isArray(items) ? items : [],
+            meta: {
+              total: total,
+              page: currentPage,
+              limit: currentLimit,
+              totalPages: totalPages,
+              hasNext: currentPage < totalPages,
+              hasPrevious: currentPage > 1
+            }
+          }
+        };
+      } else {
+        return {
+          success: false,
+          message: rawData?.message || 'Failed to fetch user transactions',
+          data: {
+            items: [],
+            meta: {
+              total: 0,
+              page: 1,
+              limit: 10,
+              totalPages: 1,
+              hasNext: false,
+              hasPrevious: false
+            }
+          }
+        };
+      }
     } catch (error: any) {
       // Handle error case
       return {
         success: false,
         message: error.message || 'Failed to fetch user transactions',
-        data: { items: [], meta: { total: 0, page: 1 } }
+        data: {
+          items: [],
+          meta: {
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false
+          }
+        }
       };
     }
   }

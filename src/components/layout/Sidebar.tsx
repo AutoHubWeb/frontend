@@ -89,9 +89,6 @@ export function Sidebar() {
               <span className="truncate">{user.email}</span>
             ) : user?.isAdmin ? "Quản trị viên" : "Thành viên"}
           </p>
-          <p className="text-xs font-medium text-emerald-600" data-testid="text-user-balance">
-            Số dư: {Number(user?.balance || 0).toLocaleString('vi-VN')}₫
-          </p>
         </div>
       </div>
 

@@ -462,6 +462,10 @@ export interface OrderResponse {
   toolOrder?: ToolOrderDetails;
 }
 
+export interface DownloadToolResponse {
+  downloadUrl: string;
+}
+
 // WebSocket types
 export interface WebSocketMessage {
   type: string;
