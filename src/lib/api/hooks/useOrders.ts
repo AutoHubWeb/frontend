@@ -99,28 +99,3 @@ export const useChangeOrderKey = (options?: MutationConfig) => {
     retry: options?.retry ?? false,
   });
 };
-
-export const useDownloadTool = (options?: MutationConfig) => {
-  return useMutation({
-    mutationFn: async (orderId: string) => {
-      const response = await orderService.downloadTool(orderId);
-      if (!response.success) {
-        throw new Error(response.message);
-      }
-      return response.data;
-    },
-    onSuccess: (data, variables, context) => {
-      // Open download URL in new tab
-      if (data?.downloadUrl) {
-        window.open(data.downloadUrl, '_blank');
-      }
-      options?.onSuccess?.(data);
-    },
-    onError: (error, variables, context) => {
-      const apiError = parseApiError(error);
-      options?.onError?.(apiError);
-    },
-    onSettled: options?.onSettled,
-    retry: options?.retry ?? false,
-  });
-};

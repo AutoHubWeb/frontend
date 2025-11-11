@@ -447,6 +447,7 @@ export interface OrderItem {
   proxy?: OrderProxy;
   toolOrder?: ToolOrderDetails;
   histories?: OrderHistory[];
+  linkDownload?: string;
 }
 
 export interface OrderResponse {

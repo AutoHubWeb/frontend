@@ -64,7 +64,9 @@ export default function Tools() {
   // Extract and transform tools from API response
   // Hook returns response.data which should be { items: [...], meta: {...} }
   const rawTools: Tool[] = (toolsResponse as any)?.items || [];
-  const tools = rawTools.map(transformTool);
+  // Filter tools to only show those with status = 1
+  const activeTools = rawTools.filter(tool => tool.status === 1);
+  const tools = activeTools.map(transformTool);
   const categories: any[] = []; // Categories will be handled separately
   const categoriesLoading = false;
 
@@ -308,7 +310,7 @@ export default function Tools() {
                 </div>
                 
                 {/* Demo - Discount Code (disabled) */}
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="discount-code">Mã giảm giá (demo)</Label>
                   <div className="flex gap-2">
                     <Input
@@ -325,7 +327,7 @@ export default function Tools() {
                       Demo
                     </Button>
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
 

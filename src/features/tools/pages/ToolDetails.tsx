@@ -479,7 +479,7 @@ export default function ToolDetails() {
             
             <div className="py-4">
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="size-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                   <ShoppingCart className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -498,7 +498,7 @@ export default function ToolDetails() {
               </div>
               
               {/* Discount Code Input */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="discount-code">Mã giảm giá (tùy chọn)</Label>
                 <div className="flex gap-2">
                   <Input
@@ -517,7 +517,7 @@ export default function ToolDetails() {
                     Kiểm tra
                   </Button>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <DialogFooter>

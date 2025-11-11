@@ -60,6 +60,10 @@ export default function Home() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [selectedMonths, setSelectedMonths] = useState<string>("1");
+  const [proxyConfirmDialogOpen, setProxyConfirmDialogOpen] = useState(false);
+  const [selectedProxy, setSelectedProxy] = useState<any | null>(null);
+  const [vpsConfirmDialogOpen, setVpsConfirmDialogOpen] = useState(false);
+  const [selectedVps, setSelectedVps] = useState<any | null>(null);
 
   // Use real API calls for tools, keep mock data for VPS
   const { data: toolsResponse, isLoading: toolsLoading, error: toolsError } = useTools();
@@ -91,7 +95,9 @@ export default function Home() {
   // Extract and transform tools from API response
   // Hook returns response.data which should be { items: [...], meta: {...} }
   const rawTools: Tool[] = (toolsResponse as any)?.items || [];
-  const tools = rawTools.map(transformTool);
+  // Filter tools to only show those with status = 1
+  const activeTools = rawTools.filter(tool => tool.status === 1);
+  const tools = activeTools.map(transformTool);
   const categories: any[] = []; // Categories will be handled separately
   const categoriesLoading = false;
 
@@ -175,9 +181,6 @@ export default function Home() {
   // Add this new hook for fetching top-up users
   const { data: topUpUsersResponse, isLoading: topUpUsersLoading, error: topUpUsersError } = useTopUpUsers();
   
-  // Add this new hook for fetching user transactions
-  const { data: userTransactionsResponse, isLoading: userTransactionsLoading, error: userTransactionsError } = useUserTransactions();
-  
   // Transform API response to match UI requirements
   const topUpUsers = topUpUsersResponse?.map((user: any, index: number) => ({
     id: index.toString(),
@@ -185,9 +188,6 @@ export default function Home() {
     amount: user.totalRecharge,
     rank: index + 1
   })) || [];
-  
-  // Transform transaction data for display
-  const userTransactions = userTransactionsResponse?.items || [];
 
   console.log('Transformed top up users:', topUpUsers);
 
@@ -282,10 +282,22 @@ export default function Home() {
       return;
     }
 
+    // Set selected VPS and open confirmation dialog
+    setSelectedVps(vps);
+    setVpsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmVpsPurchase = () => {
+    if (!selectedVps) return;
+    
     createVpsOrderMutation.mutate({
       type: "vps",
-      vpsId: vps.id,
+      vpsId: selectedVps.id,
     });
+    
+    // Close the dialog
+    setVpsConfirmDialogOpen(false);
+    setSelectedVps(null);
   };
 
   const handlePurchaseProxy = (proxy: any) => {
@@ -298,10 +310,22 @@ export default function Home() {
       return;
     }
 
+    // Set selected proxy and open confirmation dialog
+    setSelectedProxy(proxy);
+    setProxyConfirmDialogOpen(true);
+  };
+
+  const handleConfirmProxyPurchase = () => {
+    if (!selectedProxy) return;
+    
     createProxyOrderMutation.mutate({
       type: "proxy",
-      proxyId: proxy.id,
+      proxyId: selectedProxy.id,
     });
+    
+    // Close the dialog
+    setProxyConfirmDialogOpen(false);
+    setSelectedProxy(null);
   };
 
   return (
@@ -315,29 +339,33 @@ export default function Home() {
             transition={{ duration: 0.4 }}
             className="mb-8"
           >
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-3xl mx-auto">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                  <Search className="h-6 w-6 text-gray-400" />
+                </div>
                 <Input
-                  placeholder="Tìm kiếm tools và VPS..."
+                  placeholder="Tìm kiếm tools, VPS và Proxy..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 pr-12 h-12 text-lg border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-0 focus:border-gray-200 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="pl-14 pr-14 py-6 text-lg rounded-2xl border-2 border-gray-300 dark:border-gray-600 shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                   data-testid="input-global-search"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-red-500 hover:text-red-700 transition-colors"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-red-500 hover:text-red-700 transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                     data-testid="button-clear-search"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-6 w-6" />
                   </button>
                 )}
               </div>
               {searchQuery && (
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  Tìm thấy {filteredTools.length} tools và {filteredVPS.length} VPS cho &ldquo;{searchQuery}&rdquo;
+                <p className="text-base text-muted-foreground mt-3 text-center">
+                  Tìm thấy <span className="font-semibold text-blue-600">{filteredTools.length}</span> tools, 
+                  <span className="font-semibold text-purple-600"> {filteredVPS.length}</span> VPS và 
+                  <span className="font-semibold text-red-600"> {proxyResponse?.items?.filter((p: any) => p.status === 1).length || 0}</span> Proxy cho &ldquo;{searchQuery}&rdquo;
                 </p>
               )}
             </div>
@@ -421,11 +449,11 @@ export default function Home() {
           >
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 bg-clip-text text-transparent">
                   VPS & PROXY
                 </span>
               </h2>
-              <div className="h-1 w-16 bg-gradient-to-r from-purple-600 to-blue-600 mx-auto rounded-full"></div>
+              <div className="h-1 w-16 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 mx-auto rounded-full"></div>
             </div>
             
             {vpsLoading ? (
@@ -471,9 +499,10 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.1 * index }}
+                    className="flex" // Add flex to make cards equal height
                   >
-                    <Card className="overflow-hidden border-2 hover:border-purple-200 dark:hover:border-purple-700 transition-all duration-300 hover:shadow-lg">
-                      <CardContent className="p-6">
+                    <Card className="flex flex-col overflow-hidden border-2 hover:border-purple-200 dark:hover:border-purple-700 transition-all duration-300 hover:shadow-lg w-full">
+                      <CardContent className="flex flex-col flex-1 p-6">
                         <div className="text-center mb-4">
                           <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-800 dark:to-purple-800 rounded-lg flex items-center justify-center mx-auto mb-3">
                             <Server className="w-8 h-8 text-blue-600 dark:text-blue-400" />
@@ -485,7 +514,7 @@ export default function Home() {
                           </p>
                         </div>
                         
-                        <div className="space-y-3 mb-4">
+                        <div className="space-y-3 mb-4 flex-1">
                           <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
                             <Cpu className="w-4 h-4" />
                             <span className="font-medium">{vps.cpu} CPU</span>
@@ -515,16 +544,17 @@ export default function Home() {
                           </div>
                         </div>
                         
-                        <Link href="/vps">
+                        <div className="mt-auto"> {/* Push button to bottom */}
                           <Button 
-                            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium"
+                            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                            onClick={() => handlePurchaseVps(vps)}
                             disabled={createVpsOrderMutation.isPending}
                           >
                             {createVpsOrderMutation.isPending && createVpsOrderMutation.variables?.vpsId === vps.id
                               ? "Đang xử lý..."
                               : "ĐĂNG KÝ"}
                           </Button>
-                        </Link>
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -561,17 +591,18 @@ export default function Home() {
               <p className="text-muted-foreground">Lỗi tải dữ liệu proxy</p>
             </div>
           ) : proxyResponse && proxyResponse.items && proxyResponse.items.length > 0 ? (
-            // Data display - show all proxy items
+            // Data display - show all active proxy items (status = 1)
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {proxyResponse.items.map((proxy: any, index: number) => (
+              {proxyResponse.items.filter((proxy: any) => proxy.status === 1).map((proxy: any, index: number) => (
                 <motion.div
                   key={proxy.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.1 * index }}
+                  className="flex" // Add flex to make cards equal height
                 >
-                  <Card className="overflow-hidden border-2 hover:border-red-200 dark:hover:border-red-700 transition-all duration-300 hover:shadow-lg">
-                    <CardContent className="p-6">
+                  <Card className="flex flex-col overflow-hidden border-2 hover:border-red-200 dark:hover:border-red-700 transition-all duration-300 hover:shadow-lg w-full">
+                    <CardContent className="flex flex-col flex-1 p-6">
                       <div className="text-center mb-4">
                         <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-yellow-100 dark:from-red-800 dark:to-yellow-800 rounded-lg flex items-center justify-center mx-auto mb-3">
                           <Server className="w-8 h-8 text-red-600 dark:text-red-400" />
@@ -604,17 +635,19 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* Purchase Button */}
-                      <Button 
-                        className="w-full bg-gradient-to-r from-red-500 to-yellow-600 hover:from-red-600 hover:to-yellow-700 text-white font-medium py-2"
-                        onClick={() => handlePurchaseProxy(proxy)}
-                        disabled={createProxyOrderMutation.isPending}
-                        data-testid="button-purchase-proxy"
-                      >
-                        {createProxyOrderMutation.isPending && createProxyOrderMutation.variables?.proxyId === proxy.id
-                          ? "Đang xử lý..."
-                          : `MUA (${proxy.price.toLocaleString('vi-VN')}₫)`}
-                      </Button>
+                      {/* Purchase Button - Push to bottom */}
+                      <div className="mt-auto">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-red-500 to-yellow-600 hover:from-red-600 hover:to-yellow-700 text-white font-medium py-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                          onClick={() => handlePurchaseProxy(proxy)}
+                          disabled={createProxyOrderMutation.isPending}
+                          data-testid="button-purchase-proxy"
+                        >
+                          {createProxyOrderMutation.isPending && createProxyOrderMutation.variables?.proxyId === proxy.id
+                            ? "Đang xử lý..."
+                            : `MUA (${proxy.price.toLocaleString('vi-VN')}₫)`}
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -644,8 +677,8 @@ export default function Home() {
               <div className="h-1 w-16 bg-gradient-to-r from-emerald-600 to-cyan-600 mx-auto rounded-full"></div>
             </div>
             
-            {/* Statistics Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Statistics Content - Only show Top Nạp section */}
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 max-w-2xl mx-auto">
               {/* Top Nạp */}
               <Card className="shadow-lg">
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 rounded-t-lg">
@@ -700,84 +733,6 @@ export default function Home() {
                           <span className="bg-emerald-500 text-white px-3 py-1 rounded text-sm font-bold">
                             {Number(user.amount).toLocaleString('vi-VN')}
                           </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Lịch Sử Giao Dịch */}
-              <Card className="shadow-lg">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 rounded-t-lg">
-                  <h3 className="text-lg font-bold">LỊCH SỬ GIAO DỊCH</h3>
-                </div>
-                <CardContent className="p-0">
-                  {userTransactionsLoading ? (
-                    // Loading skeleton
-                    <div className="space-y-0">
-                      {[...Array(10)].map((_, index) => (
-                        <div key={index} className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <Skeleton className="h-4 w-16" />
-                              </div>
-                              <Skeleton className="h-4 w-32" />
-                              {/* Skeleton for the code line */}
-                              <Skeleton className="h-3 w-24 mt-1" />
-                            </div>
-                            <div className="text-right">
-                              <Skeleton className="h-3 w-20" />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : userTransactionsError ? (
-                    // Error state
-                    <div className="text-center py-4 text-red-500">
-                      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                      <p>Lỗi tải dữ liệu giao dịch</p>
-                      <p className="text-sm mt-1">Vui lòng thử lại sau</p>
-                    </div>
-                  ) : userTransactions.length === 0 ? (
-                    // Empty state
-                    <div className="text-center py-4 text-gray-500">
-                      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                      <p>Chưa có giao dịch nào</p>
-                    </div>
-                  ) : (
-                    // Data display
-                    <div className="space-y-0">
-                      {userTransactions.map((transaction: any, index: number) => (
-                        <div
-                          key={transaction.id || index}
-                          className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <span className="text-red-500 font-bold text-sm">
-                                  {transaction.note?.split('[')[0]?.trim() || 'Giao dịch'}
-                                </span>
-                              </div>
-                              <p className="text-gray-700 dark:text-gray-300 text-sm">
-                                {transaction.note || `+${transaction.amount?.toLocaleString('vi-VN')}₫`}
-                              </p>
-                              {/* Display the transaction code */}
-                              {transaction.code && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  Mã giao dịch: {transaction.code}
-                                </p>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <span className="text-gray-500 text-xs">
-                                {new Date(transaction.createdAt).toLocaleString('vi-VN')}
-                              </span>
-                            </div>
-                          </div>
                         </div>
                       ))}
                     </div>
@@ -867,7 +822,7 @@ export default function Home() {
                 </div>
                 
                 {/* Demo - Discount Code (disabled) */}
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="discount-code">Mã giảm giá (demo)</Label>
                   <div className="flex gap-2">
                     <Input
@@ -884,7 +839,7 @@ export default function Home() {
                       Demo
                     </Button>
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
 
@@ -901,6 +856,151 @@ export default function Home() {
                 data-testid="button-confirm-purchase"
               >
                 Xác nhận mua (Demo)
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Proxy Purchase Confirmation Dialog */}
+        <Dialog open={proxyConfirmDialogOpen} onOpenChange={setProxyConfirmDialogOpen}>
+          <DialogContent data-testid="dialog-proxy-purchase-confirmation">
+            <DialogHeader>
+              <DialogTitle>Xác nhận mua Proxy</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn mua proxy này không?
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedProxy && (
+              <div className="py-4">
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-yellow-600 rounded-lg flex items-center justify-center">
+                    <Server className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold" data-testid="text-purchase-proxy-name">{selectedProxy.name}</h4>
+                    <p className="text-2xl font-bold text-primary" data-testid="text-purchase-proxy-price">
+                      {Number(selectedProxy.price).toLocaleString('vi-VN')}₫
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mb-4">
+                  <h4 className="font-semibold mb-2">Thông tin proxy</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {selectedProxy.description}
+                  </p>
+                  <div className="mt-2 text-sm">
+                    <p className="flex justify-between">
+                      <span className="text-gray-500">Còn lại:</span>
+                      <span className="font-semibold">{selectedProxy.inventory} tài khoản</span>
+                    </p>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  Sau khi xác nhận, hệ thống sẽ trừ tiền từ tài khoản của bạn và cung cấp thông tin truy cập proxy.
+                </p>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setProxyConfirmDialogOpen(false);
+                  setSelectedProxy(null);
+                }}
+                data-testid="button-cancel-proxy-purchase"
+              >
+                Hủy
+              </Button>
+              <Button 
+                onClick={handleConfirmProxyPurchase}
+                disabled={createProxyOrderMutation.isPending}
+                data-testid="button-confirm-proxy-purchase"
+              >
+                {createProxyOrderMutation.isPending ? "Đang xử lý..." : "Xác nhận mua"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* VPS Purchase Confirmation Dialog */}
+        <Dialog open={vpsConfirmDialogOpen} onOpenChange={setVpsConfirmDialogOpen}>
+          <DialogContent data-testid="dialog-vps-purchase-confirmation">
+            <DialogHeader>
+              <DialogTitle>Xác nhận đăng ký VPS</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn đăng ký VPS này không?
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedVps && (
+              <div className="py-4">
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <Server className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold" data-testid="text-purchase-vps-name">{selectedVps.name}</h4>
+                    <p className="text-2xl font-bold text-primary" data-testid="text-purchase-vps-price">
+                      {Number(selectedVps.price).toLocaleString('vi-VN')}₫
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mb-4">
+                  <h4 className="font-semibold mb-2">Thông số kỹ thuật</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">CPU:</span>
+                      <span className="font-medium">{selectedVps.cpu} cores</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">RAM:</span>
+                      <span className="font-medium">{selectedVps.ram} GB</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Disk:</span>
+                      <span className="font-medium">{selectedVps.disk} GB</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Bandwidth:</span>
+                      <span className="font-medium">{selectedVps.bandwidth} GB</span>
+                    </div>
+                    {selectedVps.location && (
+                      <div className="flex justify-between col-span-2">
+                        <span className="text-gray-500">Vị trí:</span>
+                        <span className="font-medium">{selectedVps.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  Sau khi xác nhận, hệ thống sẽ xử lý yêu cầu của bạn và gửi thông tin truy cập VPS qua email.
+                </p>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setVpsConfirmDialogOpen(false);
+                  setSelectedVps(null);
+                }}
+                data-testid="button-cancel-vps-purchase"
+              >
+                Hủy
+              </Button>
+              <Button 
+                onClick={handleConfirmVpsPurchase}
+                disabled={createVpsOrderMutation.isPending}
+                data-testid="button-confirm-vps-purchase"
+              >
+                {createVpsOrderMutation.isPending ? "Đang xử lý..." : "Xác nhận đăng ký"}
               </Button>
             </DialogFooter>
           </DialogContent>

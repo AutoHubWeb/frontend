@@ -82,7 +82,7 @@ export function ToolCard({ tool, onPurchase }: ToolCardProps) {
             <Link href={`/tools/${tool.id}`}>
               <Button 
                 variant="outline"
-                className="w-full text-blue-500 dark:text-blue-400 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 text-xs font-medium"
+                className="w-full text-blue-500 dark:text-blue-400 border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 text-xs font-medium focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 data-testid={`button-view-details-${tool.id}`}
               >
                 XEM CHI TIẾT

@@ -51,7 +51,7 @@ import {
 import Link from "next/link";
 import type { Tool, OrderItem, PaginatedResponse } from "@/lib/api/types";
 import { ORDER_STATUS_ENUM } from "@/lib/api/types";
-import { useUserOrders, useChangeOrderKey, useDownloadTool } from "@/lib/api/hooks/useOrders";
+import { useUserOrders, useChangeOrderKey } from "@/lib/api/hooks/useOrders";
 
 export default function PurchasedTools() {
   const { isAuthenticated } = useAuth();
@@ -77,7 +77,6 @@ export default function PurchasedTools() {
   }, [ordersData, currentPage]);
 
   const changeKeyMutation = useChangeOrderKey();
-  const downloadToolMutation = useDownloadTool();
 
   // Function to get product name based on order type
   const getProductName = (order: OrderItem) => {
@@ -170,16 +169,17 @@ export default function PurchasedTools() {
   };
 
   // Function to handle download tool
-  const handleDownloadTool = async (orderId: string) => {
-    try {
-      await downloadToolMutation.mutateAsync(orderId);
-    } catch (error: any) {
-      toast({
-        title: "Lỗi",
-        description: error.message || "Không thể tải xuống công cụ",
-        variant: "destructive",
-      });
+  const handleDownloadTool = async (order: OrderItem) => {
+    // Check if the order is a tool order and has a tool with linkDownload
+    if (order.type === 'tool' && order.tool && (order.tool as any).linkDownload) {
+      // Directly open the linkDownload URL
+      const linkDownload = (order.tool as any).linkDownload;
+      if (typeof linkDownload === 'string' && linkDownload.length > 0) {
+        window.open(linkDownload, '_blank');
+        return;
+      }
     }
+
   };
 
   // Function to toggle API key visibility
@@ -463,8 +463,8 @@ export default function PurchasedTools() {
                                           <Button
                                             size="sm"
                                             variant="default"
-                                            onClick={() => handleDownloadTool(order.id)}
-                                            disabled={downloadToolMutation.isPending}
+                                            onClick={() => handleDownloadTool(order)}
+                                            // disabled={order?.linkDownload === ""}
                                             className="w-full bg-green-600 hover:bg-green-700"
                                           >
                                             <Download className="w-4 h-4 mr-1" />
