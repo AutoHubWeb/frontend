@@ -433,6 +433,18 @@ export interface ToolOrderDetails {
   changeApiKeyAt?: string;
 }
 
+export interface VPSOrderDetails {
+  ip: string;
+  username: string;
+  password: string;
+  expiredAt?: string;
+}
+
+export interface ProxyOrderDetails {
+  proxies: string;
+  expiredAt?: string;
+}
+
 export interface OrderItem {
   id: string;
   code: string;
@@ -446,6 +458,8 @@ export interface OrderItem {
   vps?: OrderVPS;
   proxy?: OrderProxy;
   toolOrder?: ToolOrderDetails;
+  vpsOrder?: VPSOrderDetails;
+  proxyOrder?: ProxyOrderDetails;
   histories?: OrderHistory[];
   linkDownload?: string;
 }
@@ -461,6 +475,8 @@ export interface OrderResponse {
   vps?: OrderVPS;
   proxy?: OrderProxy;
   toolOrder?: ToolOrderDetails;
+  vpsOrder?: VPSOrderDetails;
+  proxyOrder?: ProxyOrderDetails;
 }
 
 export interface DownloadToolResponse {

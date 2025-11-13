@@ -75,191 +75,199 @@ export default function History() {
 
   return (
     <Layout showSidebar={isAuthenticated}>
-      <div className="p-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Lịch sử giao dịch</h1>
-            <p className="text-muted-foreground">Xem lại tất cả các giao dịch của bạn</p>
-          </div>
-
-          {/* Search Input */}
-          <div className="mb-6">
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm mã giao dịch, ghi chú..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Transaction History Card */}
+      <div className="w-full max-w-full overflow-x-hidden ">
+        <div className="container w-[400px] md:w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6 }}
           >
-            <Card>
-              <CardHeader>
-                <CardTitle>Danh sách giao dịch</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {transactionsLoading ? (
-                  <div className="space-y-4">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 border-b">
-                        <div className="flex items-center space-x-4">
-                          <Skeleton className="w-10 h-10 rounded-full" />
-                          <div className="space-y-1">
-                            <Skeleton className="h-4 w-32" />
-                            <Skeleton className="h-3 w-24" />
-                          </div>
-                        </div>
-                        <div className="text-right space-y-1">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-16" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : transactionsError ? (
-                  <div className="text-center py-8 text-red-500">
-                    <AlertCircle className="h-12 w-12 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Lỗi tải dữ liệu</h3>
-                    <p className="text-muted-foreground">Không thể tải lịch sử giao dịch. Vui lòng thử lại sau.</p>
-                  </div>
-                ) : filteredTransactions.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">
-                      {searchQuery ? "Không tìm thấy giao dịch" : "Chưa có giao dịch"}
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {searchQuery 
-                        ? `Không tìm thấy giao dịch nào phù hợp với "${searchQuery}"` 
-                        : "Bạn chưa thực hiện giao dịch nào"}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-4">
-                      {filteredTransactions.map((transaction: TransactionItem, index: number) => (
-                        <motion.div
-                          key={transaction.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: index * 0.05 }}
-                          className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
-                        >
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Lịch sử giao dịch</h1>
+              <p className="text-muted-foreground">Xem lại tất cả các giao dịch của bạn</p>
+            </div>
+
+            {/* Search Input */}
+            <div className="mb-6 w-full max-w-md">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Tìm kiếm mã giao dịch, ghi chú..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full"
+                />
+              </div>
+            </div>
+
+            {/* Transaction History Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Card className="w-full max-w-full">
+                <CardHeader>
+                  <CardTitle>Danh sách giao dịch</CardTitle>
+                </CardHeader>
+                <CardContent className="w-full max-w-full">
+                  {transactionsLoading ? (
+                    <div className="space-y-4 w-full max-w-full">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 border-b">
                           <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                              <span className="text-white font-bold text-sm">
-                                {transaction.action === 'deposit' ? '+' : '-'}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="font-medium">
-                                {transaction.description?.split('[')[0]?.trim() || 'Giao dịch'}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString('vi-VN') : 'N/A'}
-                              </p>
-                              {/* Display the transaction code */}
-                              {transaction.code && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  Mã: {transaction.code}
-                                </p>
-                              )}
+                            <Skeleton className="w-10 h-10 rounded-full" />
+                            <div className="space-y-1">
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-3 w-24" />
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className={`font-bold text-lg ${
-                              transaction.action === 'deposit' ? 'text-emerald-600' : 'text-orange-600'
-                            }`}>
-                              {transaction.action === 'deposit' ? '+' : '-'}
-                              {Number(transaction.amount).toLocaleString('vi-VN')}₫
-                            </p>
-                            <Badge variant="default" className="mt-1">
-                              {transaction.action === 'deposit' ? 'Nạp tiền' : 'Chi tiêu'}
-                            </Badge>
+                          <div className="text-right space-y-1">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-3 w-16" />
                           </div>
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
-                    
-                    {/* Pagination */}
-                    {userTransactionsResponse?.meta && userTransactionsResponse?.items && userTransactionsResponse?.items.length > 0 && (
-                      <div className="flex items-center justify-between px-4 py-3 border-t mt-6">
-                        <div className="text-sm text-muted-foreground">
-                          Tổng cộng {userTransactionsResponse.meta.total} giao dịch
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={goToFirstPage}
-                            disabled={currentPage === 1}
-                          >
-                            <ChevronsLeft className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={goToPreviousPage}
-                            disabled={currentPage === 1}
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <div className="text-sm font-medium">
-                            Trang {currentPage} / {userTransactionsResponse.meta.totalPages}
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={goToNextPage}
-                            disabled={currentPage === userTransactionsResponse.meta.totalPages}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={goToLastPage}
-                            disabled={currentPage === userTransactionsResponse.meta.totalPages}
-                          >
-                            <ChevronsRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-muted-foreground">Hiển thị:</span>
-                          <select
-                            value={itemsPerPage}
-                            onChange={(e) => {
-                              setItemsPerPage(Number(e.target.value));
-                              setCurrentPage(1); // Reset to first page when changing items per page
-                            }}
-                            className="h-8 rounded border text-sm"
-                          >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="50">50</option>
-                          </select>
+                  ) : transactionsError ? (
+                    <div className="text-center py-8 text-red-500">
+                      <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Lỗi tải dữ liệu</h3>
+                      <p className="text-muted-foreground">Không thể tải lịch sử giao dịch. Vui lòng thử lại sau.</p>
+                    </div>
+                  ) : filteredTransactions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">
+                        {searchQuery ? "Không tìm thấy giao dịch" : "Chưa có giao dịch"}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {searchQuery 
+                          ? `Không tìm thấy giao dịch nào phù hợp với "${searchQuery}"` 
+                          : "Bạn chưa thực hiện giao dịch nào"}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="overflow-x-auto w-full max-w-full">
+                        <div className="min-w-[600px] w-full">
+                          {filteredTransactions.map((transaction: TransactionItem, index: number) => (
+                            <motion.div
+                              key={transaction.id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.4, delay: index * 0.05 }}
+                              className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors gap-4 w-full"
+                            >
+                              <div className="flex items-center space-x-4">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <span className="text-white font-bold text-sm">
+                                    {transaction.action === 'deposit' ? '+' : '-'}
+                                  </span>
+                                </div>
+                                <div className="min-w-0"> {/* Added min-w-0 to allow text truncation */}
+                                  <p className="font-medium truncate text-base">
+                                    {transaction.description?.split('[')[0]?.trim() || 'Giao dịch'}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground truncate">
+                                    {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                                  </p>
+                                  {/* Display the transaction code */}
+                                  {transaction.code && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                                      Mã: {transaction.code}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className={`font-bold text-lg ${
+                                  transaction.action === 'deposit' ? 'text-emerald-600' : 'text-orange-600'
+                                }`}>
+                                  {transaction.action === 'deposit' ? '+' : '-'}
+                                  {Number(transaction.amount).toLocaleString('vi-VN')}₫
+                                </p>
+                                <Badge variant="default" className="mt-1">
+                                  {transaction.action === 'deposit' ? 'Nạp tiền' : 'Chi tiêu'}
+                                </Badge>
+                              </div>
+                            </motion.div>
+                          ))}
                         </div>
                       </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                      
+                      {/* Pagination */}
+                      {userTransactionsResponse?.meta && userTransactionsResponse?.items && userTransactionsResponse?.items.length > 0 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-3 border-t mt-6 gap-4 w-full">
+                          <div className="text-sm text-muted-foreground whitespace-nowrap">
+                            Tổng cộng {userTransactionsResponse.meta.total} giao dịch
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={goToFirstPage}
+                              disabled={currentPage === 1}
+                              className="p-2"
+                            >
+                              <ChevronsLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={goToPreviousPage}
+                              disabled={currentPage === 1}
+                              className="p-2"
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <div className="text-sm font-medium px-2 whitespace-nowrap">
+                              {currentPage} / {userTransactionsResponse.meta.totalPages}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={goToNextPage}
+                              disabled={currentPage === userTransactionsResponse.meta.totalPages}
+                              className="p-2"
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={goToLastPage}
+                              disabled={currentPage === userTransactionsResponse.meta.totalPages}
+                              className="p-2"
+                            >
+                              <ChevronsRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">Hiển thị:</span>
+                            <select
+                              value={itemsPerPage}
+                              onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1); // Reset to first page when changing items per page
+                              }}
+                              className="h-8 rounded border text-sm"
+                            >
+                              <option value="5">5</option>
+                              <option value="10">10</option>
+                              <option value="20">20</option>
+                              <option value="50">50</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
       </div>
     </Layout>
   );

@@ -30,7 +30,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Info
 } from "lucide-react";
 import {
   Dialog,
@@ -59,6 +60,7 @@ export default function PurchasedTools() {
   const queryClient = useQueryClient();
 
   const [changeKeyDialogOpen, setChangeKeyDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
@@ -121,24 +123,85 @@ export default function PurchasedTools() {
     }
   };
 
+  // Function to check if an order has expired based on expiration date
+  const isOrderExpired = (order: OrderItem) => {
+    // If the order is already marked as overdue, cancel, or fail, it's considered expired
+    if (order.status === ORDER_STATUS_ENUM.OVERDUE || 
+        order.status === ORDER_STATUS_ENUM.CANCEL || 
+        order.status === ORDER_STATUS_ENUM.FAIL) {
+      return true;
+    }
+    
+    // Check expiration date if available
+    let expirationDate: Date | null = null;
+    if (order.type === 'tool' && order.toolOrder?.expiredAt) {
+      expirationDate = new Date(order.toolOrder.expiredAt);
+    } else if (order.type === 'vps' && order.vpsOrder?.expiredAt) {
+      expirationDate = new Date(order.vpsOrder.expiredAt);
+    } else if (order.type === 'proxy' && order.proxyOrder?.expiredAt) {
+      expirationDate = new Date(order.proxyOrder.expiredAt);
+    }
+    
+    // If we have an expiration date, check if it's in the past
+    if (expirationDate) {
+      return expirationDate < new Date();
+    }
+    
+    // If no expiration date, rely on status only
+    return false;
+  };
+
   // Function to filter expired/inactive orders
   const getExpiredOrders = () => {
+    return []; // Return empty array since we're hiding expired orders completely
+  };
+
+  // Function to filter active orders (not expired)
+  const getActiveOrders = () => {
     if (!ordersData?.data) return [];
     
-    return ordersData.data.filter((order: OrderItem) => 
-      order.status === ORDER_STATUS_ENUM.OVERDUE || 
-      order.status === ORDER_STATUS_ENUM.CANCEL || 
-      order.status === ORDER_STATUS_ENUM.FAIL
-    );
+    return ordersData.data.filter((order: OrderItem) => {
+      // If the order is marked as overdue, cancel, or fail, it's considered expired
+      if (order.status === ORDER_STATUS_ENUM.OVERDUE || 
+          order.status === ORDER_STATUS_ENUM.CANCEL || 
+          order.status === ORDER_STATUS_ENUM.FAIL) {
+        return false;
+      }
+      
+      // Check expiration date if available
+      let expirationDate: Date | null = null;
+      if (order.type === 'tool' && order.toolOrder?.expiredAt) {
+        expirationDate = new Date(order.toolOrder.expiredAt);
+      } else if (order.type === 'vps' && order.vpsOrder?.expiredAt) {
+        expirationDate = new Date(order.vpsOrder.expiredAt);
+      } else if (order.type === 'proxy' && order.proxyOrder?.expiredAt) {
+        expirationDate = new Date(order.proxyOrder.expiredAt);
+      }
+      
+      // If we have an expiration date, check if it's in the past
+      if (expirationDate && expirationDate < new Date()) {
+        return false;
+      }
+      
+      // If we reach here, the order is active
+      return true;
+    });
   };
 
   const expiredOrders = getExpiredOrders();
+  const activeOrders = getActiveOrders();
 
   // Function to handle change key button click
   const handleChangeKeyClick = (order: OrderItem) => {
     setSelectedOrder(order);
     setApiKey("");
     setChangeKeyDialogOpen(true);
+  };
+
+  // Function to handle detail button click
+  const handleDetailClick = (order: OrderItem) => {
+    setSelectedOrder(order);
+    setDetailDialogOpen(true);
   };
 
   // Function to handle key change submission
@@ -226,6 +289,34 @@ export default function PurchasedTools() {
     }
   };
 
+  // Get expiration date based on order type
+  const getExpirationDate = (order: OrderItem) => {
+    if (order.type === 'tool' && order.toolOrder?.expiredAt) {
+      return new Date(order.toolOrder.expiredAt).toLocaleDateString('vi-VN');
+    } else if (order.type === 'vps' && order.vpsOrder?.expiredAt) {
+      return new Date(order.vpsOrder.expiredAt).toLocaleDateString('vi-VN');
+    } else if (order.type === 'proxy' && order.proxyOrder?.expiredAt) {
+      return new Date(order.proxyOrder.expiredAt).toLocaleDateString('vi-VN');
+    }
+    return 'N/A';
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString('vi-VN');
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Date string:', dateString);
+      return 'Invalid Date';
+    }
+  };
+
   return (
     <Layout showSidebar={isAuthenticated}>
       <div className="p-8">
@@ -275,7 +366,7 @@ export default function PurchasedTools() {
                 </Card>
               ))}
             </div>
-          ) : expiredOrders.length === 0 && (!ordersData?.data || ordersData.data.length === 0) ? (
+          ) : activeOrders.length === 0 ? (
             <div className="text-center py-16">
               <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
               <h3 className="text-2xl font-bold mb-4">
@@ -297,67 +388,6 @@ export default function PurchasedTools() {
             </div>
           ) : (
             <div className="space-y-8">
-              {/* Expired Tools */}
-              {expiredOrders.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                  <h2 className="text-2xl font-bold mb-6 text-red-600">Đã hết hạn ({expiredOrders.length})</h2>
-                  <div className="space-y-4">
-                    {expiredOrders.map((order: OrderItem, index: number) => {
-                      const statusInfo = getStatusInfo(order.status);
-                      const toolPlanName = getToolPlanName(order);
-                      
-                      return (
-                        <motion.div
-                          key={order.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: index * 0.1 }}
-                        >
-                          <Card className="opacity-75">
-                            <CardContent className="p-6">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                  <div className="w-16 h-16 bg-gray-400 rounded-lg flex items-center justify-center">
-                                    <ShoppingBag className="w-8 h-8 text-white" />
-                                  </div>
-                                  <div>
-                                    <h3 className="text-xl font-bold mb-1 text-muted-foreground" data-testid={`text-expired-tool-name-${order.id}`}>
-                                      {getProductName(order)}
-                                    </h3>
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                      Mua ngày {getOrderDate(order)}
-                                    </p>
-                                    {toolPlanName && (
-                                      <p className="text-sm text-muted-foreground mb-2">
-                                        Gói: {toolPlanName}
-                                      </p>
-                                    )}
-                                    <Badge variant="destructive" className={statusInfo.className}>
-                                      <Clock className="w-3 h-3 mr-1" />
-                                      {statusInfo.text}
-                                    </Badge>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-sm text-muted-foreground">Đã mua với giá</p>
-                                  <p className="text-lg font-bold text-muted-foreground">
-                                    {Number(order.totalPrice).toLocaleString('vi-VN')}₫
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-
               {/* Orders Table */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -368,7 +398,7 @@ export default function PurchasedTools() {
                   <Table className="w-6 h-6 mr-2" />
                   Lịch sử đơn hàng
                 </h2>
-                <div className="overflow-x-auto">
+                <div className="w-[400px] md:w-full overflow-x-auto">
                   <Card>
                     <CardContent className="p-0">
                       {isLoading ? (
@@ -377,7 +407,7 @@ export default function PurchasedTools() {
                           <Skeleton className="w-full h-10 mb-2" />
                           <Skeleton className="w-full h-10" />
                         </div>
-                      ) : ordersData?.data && ordersData.data.length > 0 ? (
+                      ) : activeOrders.length > 0 ? (
                         <>
                           <UITable>
                             <TableHeader>
@@ -387,6 +417,7 @@ export default function PurchasedTools() {
                                 <TableHead className="whitespace-nowrap">Gói</TableHead>
                                 <TableHead className="whitespace-nowrap">Loại</TableHead>
                                 <TableHead className="whitespace-nowrap">Ngày tạo</TableHead>
+                                <TableHead className="whitespace-nowrap">Ngày hết hạn</TableHead>
                                 <TableHead className="whitespace-nowrap">Trạng thái</TableHead>
                                 <TableHead className="whitespace-nowrap">Tổng tiền</TableHead>
                                 <TableHead className="whitespace-nowrap">API Key</TableHead>
@@ -395,7 +426,7 @@ export default function PurchasedTools() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {ordersData.data.map((order: OrderItem, index: number) => {
+                              {activeOrders.map((order: OrderItem, index: number) => {
                                 const statusInfo = getStatusInfo(order.status);
                                 const toolPlanName = getToolPlanName(order);
                                 const isToolOrder = order.type === 'tool';
@@ -412,6 +443,7 @@ export default function PurchasedTools() {
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="whitespace-nowrap">{getOrderDate(order)}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{getExpirationDate(order)}</TableCell>
                                     <TableCell>
                                       <Badge 
                                         variant={statusInfo.variant as any}
@@ -449,6 +481,15 @@ export default function PurchasedTools() {
                                       )}
                                     </TableCell>
                                     <TableCell className="space-y-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleDetailClick(order)}
+                                        className="w-full mb-2"
+                                      >
+                                        <Info className="w-4 h-4 mr-1" />
+                                        Chi tiết
+                                      </Button>
                                       {isToolOrder && (
                                         <div className="flex flex-col gap-2">
                                           <Button
@@ -481,10 +522,10 @@ export default function PurchasedTools() {
                           </UITable>
                           
                           {/* Pagination */}
-                          {ordersData.meta && ordersData.data && ordersData.data.length > 0 && (
+                          {ordersData?.meta && activeOrders && activeOrders.length > 0 && (
                             <div className="flex items-center justify-between px-4 py-3 border-t">
                               <div className="text-sm text-muted-foreground">
-                                Tổng cộng {ordersData.meta.total} đơn hàng
+                                Tổng cộng {activeOrders.length} đơn hàng
                               </div>
                               <div className="flex items-center space-x-2">
                                 <Button
@@ -504,13 +545,13 @@ export default function PurchasedTools() {
                                   <ChevronLeft className="h-4 w-4" />
                                 </Button>
                                 <div className="text-sm font-medium">
-                                  Trang {currentPage} / {ordersData.meta.totalPages}
+                                  Trang {currentPage} / {ordersData?.meta?.totalPages}
                                 </div>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={goToNextPage}
-                                  disabled={currentPage === ordersData.meta.totalPages}
+                                  disabled={currentPage === ordersData?.meta?.totalPages}
                                 >
                                   <ChevronRight className="h-4 w-4" />
                                 </Button>
@@ -518,7 +559,7 @@ export default function PurchasedTools() {
                                   variant="outline"
                                   size="sm"
                                   onClick={goToLastPage}
-                                  disabled={currentPage === ordersData.meta.totalPages}
+                                  disabled={currentPage === ordersData?.meta?.totalPages}
                                 >
                                   <ChevronsRight className="h-4 w-4" />
                                 </Button>
@@ -597,6 +638,159 @@ export default function PurchasedTools() {
                   'Cập nhật Key'
                 )}
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Detail Dialog */}
+        <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Chi tiết đơn hàng</DialogTitle>
+              <DialogDescription>
+                Thông tin chi tiết về đơn hàng {selectedOrder?.code}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedOrder && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Thông tin chung</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Mã đơn hàng</p>
+                      <p className="font-medium">{selectedOrder.code}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Loại đơn hàng</p>
+                      <p className="font-medium">
+                        {selectedOrder.type === 'tool' ? 'Công cụ' : selectedOrder.type === 'vps' ? 'VPS' : 'Proxy'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Ngày tạo</p>
+                      <p className="font-medium">{formatDate(selectedOrder.createdAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Trạng thái</p>
+                      <Badge variant={getStatusInfo(selectedOrder.status).variant as any} className={getStatusInfo(selectedOrder.status).className}>
+                        {getStatusInfo(selectedOrder.status).text}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Tổng tiền</p>
+                      <p className="font-medium">{Number(selectedOrder.totalPrice).toLocaleString('vi-VN')}₫</p>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedOrder.type === 'tool' && selectedOrder.toolOrder && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Thông tin công cụ</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Tên gói</p>
+                        <p className="font-medium">{selectedOrder.toolOrder.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Giá</p>
+                        <p className="font-medium">{Number(selectedOrder.toolOrder.price).toLocaleString('vi-VN')}₫</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Thời hạn</p>
+                        <p className="font-medium">
+                          {selectedOrder.toolOrder.duration === -1 ? 'Vĩnh viễn' : `${selectedOrder.toolOrder.duration} tháng`}
+                        </p>
+                      </div>
+                      {selectedOrder.toolOrder.expiredAt && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Ngày hết hạn</p>
+                          <p className="font-medium">{formatDate(selectedOrder.toolOrder.expiredAt)}</p>
+                        </div>
+                      )}
+                      {selectedOrder.toolOrder.changeApiKeyAt && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Lần cập nhật key cuối</p>
+                          <p className="font-medium">{formatDate(selectedOrder.toolOrder.changeApiKeyAt)}</p>
+                        </div>
+                      )}
+                      {selectedOrder.toolOrder.apiKey && (
+                        <div className="col-span-2">
+                          <p className="text-sm text-muted-foreground">API Key</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Input
+                              type="text"
+                              value={selectedOrder.toolOrder.apiKey}
+                              readOnly
+                              className="font-mono"
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => copyApiKeyToClipboard(selectedOrder.toolOrder!.apiKey!, selectedOrder.id)}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedOrder.type === 'vps' && selectedOrder.vpsOrder && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Thông tin VPS</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">IP</p>
+                        <p className="font-medium">{selectedOrder.vpsOrder.ip}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Username</p>
+                        <p className="font-medium">{selectedOrder.vpsOrder.username}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Password</p>
+                        <p className="font-medium">{selectedOrder.vpsOrder.password}</p>
+                      </div>
+                      {selectedOrder.vpsOrder.expiredAt && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Ngày hết hạn</p>
+                          <p className="font-medium">{formatDate(selectedOrder.vpsOrder.expiredAt)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedOrder.type === 'proxy' && selectedOrder.proxyOrder && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Thông tin Proxy</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Proxy</p>
+                        <p className="font-medium">{selectedOrder.proxyOrder.proxies}</p>
+                      </div>
+                      {selectedOrder.proxyOrder.expiredAt && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Ngày hết hạn</p>
+                          <p className="font-medium">{formatDate(selectedOrder.proxyOrder.expiredAt)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedOrder.note && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Ghi chú</h3>
+                    <p className="text-muted-foreground">{selectedOrder.note}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            <DialogFooter>
+              <Button onClick={() => setDetailDialogOpen(false)}>Đóng</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -99,22 +99,9 @@ export function Header() {
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
-            {/* Mobile Menu Button (always visible for authenticated users) */}
-            {isAuthenticated && (
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="default" className="md:hidden rounded-full hover:bg-accent" data-testid="button-mobile-menu">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-64">
-                  <Sidebar />
-                </SheetContent>
-              </Sheet>
-            )}
-
-            {/* Auth Buttons or User Menu */}
+            {/* Mobile Menu and Profile Handling */}
             {!isAuthenticated ? (
+              // Not authenticated - show login/register buttons
               <div className="flex items-center space-x-3">
                 <Link href="/login">
                   <Button
@@ -150,68 +137,88 @@ export function Header() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-3">
-                {/* User Menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-accent" data-testid="button-user-menu">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={(user as any)?.profileImageUrl} alt="" />
-                        <AvatarFallback className="text-sm font-medium">
-                          {(user as any)?.firstName?.[0]?.toUpperCase() || (user as any)?.email?.[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
+              // Authenticated - show menu and profile appropriately
+              <>
+                {/* Mobile Menu Button - only shown on mobile */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="default" 
+                      className="md:hidden rounded-full hover:bg-accent" 
+                      data-testid="button-mobile-menu"
+                    >
+                      <Menu className="h-5 w-5" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64" align="end" forceMount>
-                    <div className="flex flex-col space-y-2 p-3">
-                      <p className="text-base font-semibold">{(user as any)?.firstName} {(user as any)?.lastName}</p>
-                      <p className="text-sm text-muted-foreground">{(user as any)?.email}</p>
-                      {(user as any)?.isAdmin && (
-                        <span className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-full w-fit">
-                          Admin
-                        </span>
-                      )}
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center py-2">
-                        <User className="mr-3 h-5 w-5 text-blue-500" />
-                        <span className="text-base">Thông tin tài khoản</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/deposit" className="flex items-center py-2">
-                        <Send className="mr-3 h-5 w-5 text-pink-500" />
-                        <span className="text-base">Chuyển Tiền</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/purchased-tools" className="flex items-center py-2">
-                        <Wrench className="mr-3 h-5 w-5 text-orange-500" />
-                        <span className="text-base">Quản Lý Công Cụ</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    {(user as any)?.isAdmin && (
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-64 p-0">
+                    <Sidebar />
+                  </SheetContent>
+                </Sheet>
+                
+                {/* Profile Menu - shown on desktop, and as icon on mobile */}
+                <div className="hidden md:block">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-accent" data-testid="button-user-menu">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={(user as any)?.profileImageUrl} alt="" />
+                          <AvatarFallback className="text-sm font-medium">
+                            {(user as any)?.firstName?.[0]?.toUpperCase() || (user as any)?.email?.[0]?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-64" align="end" forceMount>
+                      <div className="flex flex-col space-y-2 p-3">
+                        <p className="text-base font-semibold">{(user as any)?.firstName} {(user as any)?.lastName}</p>
+                        <p className="text-sm text-muted-foreground">{(user as any)?.email}</p>
+                        {(user as any)?.isAdmin && (
+                          <span className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-full w-fit">
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/admin" className="flex items-center py-2">
-                          <Server className="mr-3 h-5 w-5 text-purple-500" />
-                          <span className="text-base">Quản Lý VPS</span>
+                        <Link href="/profile" className="flex items-center py-2">
+                          <User className="mr-3 h-5 w-5 text-blue-500" />
+                          <span className="text-base">Thông tin tài khoản</span>
                         </Link>
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      data-testid="button-logout"
-                      className="flex items-center py-2"
-                    >
-                      <LogOut className="mr-3 h-5 w-5 text-red-500" />
-                      <span className="text-base">Đăng Xuất</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                      <DropdownMenuItem asChild>
+                        <Link href="/deposit" className="flex items-center py-2">
+                          <Send className="mr-3 h-5 w-5 text-pink-500" />
+                          <span className="text-base">Chuyển Tiền</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/purchased-tools" className="flex items-center py-2">
+                          <Wrench className="mr-3 h-5 w-5 text-orange-500" />
+                          <span className="text-base">Quản Lý Công Cụ</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      {(user as any)?.isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin" className="flex items-center py-2">
+                            <Server className="mr-3 h-5 w-5 text-purple-500" />
+                            <span className="text-base">Quản Lý VPS</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        data-testid="button-logout"
+                        className="flex items-center py-2"
+                      >
+                        <LogOut className="mr-3 h-5 w-5 text-red-500" />
+                        <span className="text-base">Đăng Xuất</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </>
             )}
           </div>
         </div>

@@ -46,6 +46,8 @@ export class OrderService {
             vps: response.data.vps as OrderVPS,
             proxy: response.data.proxy as OrderProxy,
             toolOrder: response.data.toolOrder,
+            vpsOrder: response.data.vpsOrder,
+            proxyOrder: response.data.proxyOrder,
             histories: response.data.histories || []
           } : undefined
         };
@@ -67,6 +69,8 @@ export class OrderService {
             vps: response.data.vps as OrderVPS,
             proxy: response.data.proxy as OrderProxy,
             toolOrder: response.data.toolOrder,
+            vpsOrder: response.data.vpsOrder,
+            proxyOrder: response.data.proxyOrder,
             histories: response.data.histories || []
           }
         };
@@ -114,6 +118,8 @@ export class OrderService {
             vps: response.data.vps as OrderVPS,
             proxy: response.data.proxy as OrderProxy,
             toolOrder: response.data.toolOrder,
+            vpsOrder: response.data.vpsOrder,
+            proxyOrder: response.data.proxyOrder,
             histories: response.data.histories || []
           } : undefined
         };
@@ -135,6 +141,8 @@ export class OrderService {
             vps: response.data.vps as OrderVPS,
             proxy: response.data.proxy as OrderProxy,
             toolOrder: response.data.toolOrder,
+            vpsOrder: response.data.vpsOrder,
+            proxyOrder: response.data.proxyOrder,
             histories: response.data.histories || []
           }
         };
@@ -211,6 +219,8 @@ export class OrderService {
               vps: item.vps as OrderVPS,
               proxy: item.proxy as OrderProxy,
               toolOrder: item.toolOrder,
+              vpsOrder: item.vpsOrder,
+              proxyOrder: item.proxyOrder,
               histories: item.histories || []
             })) : [],
             meta
@@ -250,6 +260,8 @@ export class OrderService {
               vps: item.vps as OrderVPS,
               proxy: item.proxy as OrderProxy,
               toolOrder: item.toolOrder,
+              vpsOrder: item.vpsOrder,
+              proxyOrder: item.proxyOrder,
               histories: item.histories || []
             })) : [],
             meta
@@ -326,6 +338,8 @@ export class OrderService {
             vps: data.vps as OrderVPS,
             proxy: data.proxy as OrderProxy,
             toolOrder: data.toolOrder,
+            vpsOrder: data.vpsOrder,
+            proxyOrder: data.proxyOrder,
             histories: data.histories || []
           } : undefined
         };

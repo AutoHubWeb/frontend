@@ -66,15 +66,15 @@ export function Sidebar() {
     <div className="flex h-full w-64 flex-col bg-card border-r border-border">
       {/* User Info */}
       <div className="flex items-center space-x-3 p-6 border-b border-border">
-        <Avatar className="h-10 w-10">
+        <Avatar className="h-12 w-12">
           <AvatarImage src={user?.profileImageUrl} alt="" />
-          <AvatarFallback>
+          <AvatarFallback className="text-lg font-medium">
             {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0"> {/* Added min-w-0 to allow text truncation */}
           <p 
-            className="font-semibold text-sm truncate" 
+            className="font-semibold text-base truncate" 
             data-testid="text-user-name"
             title={user?.firstName && user?.lastName 
               ? `${user.firstName} ${user.lastName}`
@@ -84,7 +84,7 @@ export function Sidebar() {
               ? `${user.firstName} ${user.lastName}`
               : user?.email || "User"}
           </p>
-          <p className="text-xs text-muted-foreground truncate" title={user?.email}>
+          <p className="text-sm text-muted-foreground truncate" title={user?.email}>
             {user?.email ? (
               <span className="truncate">{user.email}</span>
             ) : user?.isAdmin ? "Quản trị viên" : "Thành viên"}
@@ -99,15 +99,15 @@ export function Sidebar() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+              "flex items-center space-x-3 px-3 py-3 rounded-lg text-base font-medium transition-colors",
               pathname === item.href
                 ? "bg-accent text-accent-foreground"
                 : "hover:bg-accent hover:text-accent-foreground"
             )}
             data-testid={`link-sidebar-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
           >
-            <item.icon className="h-5 w-5" />
-            <span>{item.name}</span>
+            <item.icon className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">{item.name}</span>
           </Link>
         ))}
 
@@ -124,15 +124,15 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center space-x-3 px-3 py-3 rounded-lg text-base font-medium transition-colors",
                   pathname === item.href
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent hover:text-accent-foreground"
                 )}
                 data-testid={`link-sidebar-admin-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                <item.icon className="h-5 w-5" />
-                <span>{item.name}</span>
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <span className="truncate">{item.name}</span>
               </Link>
             ))}
           </>
