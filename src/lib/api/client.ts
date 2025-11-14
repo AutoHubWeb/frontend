@@ -138,12 +138,19 @@ export class ApiClient {
       // Make the request
       const response = await fetch(fullUrl, fetchOptions);
       
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
       // Parse response
       const responseData: ApiResponse<T> = await response.json();
+      
+      if (!response.ok) {
+        // Create a proper error object with response data
+        const error: any = new Error(responseData.message || `HTTP ${response.status}: ${response.statusText}`);
+        error.response = {
+          status: response.status,
+          data: responseData
+        };
+        throw error;
+      }
+      
       return responseData;
     } catch (error: any) {
       const apiError = parseApiError(error);

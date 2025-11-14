@@ -13,7 +13,6 @@ import { isUnauthorizedError } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -21,10 +20,6 @@ import {
   Eye,
   Star,
   ShoppingCart,
-  Play,
-  Download,
-  MessageCircle,
-  ExternalLink,
 } from "lucide-react";
 import {
   Dialog,
@@ -34,10 +29,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import type { Tool, Category } from "@/lib/api/types";
 
 export default function ToolDetails() {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +51,7 @@ export default function ToolDetails() {
     // Map the plans correctly
     const plans = apiTool.plans?.map((plan: any) => ({
       name: plan.name,
-      duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} tháng`,
+      duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} ngày`,
       amount: plan.price?.toString() || "0",
       durationValue: plan.duration === -1 ? 3 : plan.duration <= 1 ? 1 : 2, // Map to 1, 2, 3
       rawDuration: plan.duration // Keep the raw duration value for API calls
@@ -319,7 +311,7 @@ export default function ToolDetails() {
                           onClick={() => handlePurchase(priceOption)}
                           data-testid={`button-purchase-${priceOption.duration.replace(' ', '-').toLowerCase()}`}
                         >
-                          <span>Mua {priceOption.duration}</span>
+                          <span>Mua {priceOption.name}</span>
                           <span className="font-bold">
                             {Number(priceOption.amount).toLocaleString('vi-VN')}₫
                           </span>

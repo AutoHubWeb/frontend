@@ -49,9 +49,12 @@ export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
         onRegisterSuccess();
       }
     } catch (error: any) {
+      // Extract error message from API response
+      const errorMessage = error?.response?.data?.message || error?.message || "Có lỗi xảy ra khi đăng ký";
+      
       toast({
         title: "Đăng ký thất bại",
-        description: error.message || "Có lỗi xảy ra khi đăng ký",
+        description: errorMessage,
         variant: "destructive",
       });
     }

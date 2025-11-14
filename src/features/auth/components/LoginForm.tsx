@@ -65,9 +65,12 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         onLoginSuccess();
       }
     } catch (error: any) {
+      // Extract error message from API response
+      const errorMessage = error?.response?.data?.message || error?.message || "Thông tin đăng nhập không chính xác";
+      
       toast({
         title: "Đăng nhập thất bại",
-        description: error.message || "Thông tin đăng nhập không chính xác",
+        description: errorMessage,
         variant: "destructive",
       });
     }

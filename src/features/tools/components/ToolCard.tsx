@@ -9,7 +9,7 @@ interface ToolCardProps {
     name: string;
     description: string;
     price: string;
-    prices?: Array<{ duration: string; amount: string }>;
+    prices?: Array<{ name: string; duration: string; amount: string }>;
     imageUrl?: string;
     views: number;
     purchases: number;
@@ -48,7 +48,7 @@ export function ToolCard({ tool, onPurchase }: ToolCardProps) {
                 <span className="text-red-500 font-semibold">
                   {Number(priceOption.amount).toLocaleString('vi-VN')} ₫
                 </span>
-                <span className="text-red-400 dark:text-red-300">/ {priceOption.duration}</span>
+                <span className="text-red-400 dark:text-red-300">/ {priceOption.name}</span>
               </div>
             ))}
             {!tool.prices && (

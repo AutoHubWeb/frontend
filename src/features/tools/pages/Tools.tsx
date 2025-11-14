@@ -48,7 +48,8 @@ export default function Tools() {
       description: apiTool.description,
       price: apiTool.plans?.[0]?.price?.toString() || "0",
       prices: apiTool.plans?.map(plan => ({
-        duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} tháng`,
+        name: plan.name || (plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} ngày`),
+        duration: plan.duration === -1 ? "Vĩnh viễn" : `${plan.duration} ngày`,
         amount: plan.price.toString()
       })) || [],
       imageUrl: apiTool.images?.[0]?.fileUrl 

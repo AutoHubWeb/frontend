@@ -354,9 +354,21 @@ export class OrderService {
     } catch (error: any) {
       // Handle network errors or other exceptions
       console.error('Change Key API Error:', error);
+      
+      // Extract error message from API response if available
+      let errorMessage = 'Không thể kết nối đến máy chủ';
+      
+      if (error.response && error.response.data) {
+        // Handle structured error response
+        errorMessage = error.response.data.message || errorMessage;
+      } else if (error.message) {
+        // Handle generic error message
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
-        message: error.message || 'Không thể kết nối đến máy chủ',
+        message: errorMessage,
         data: undefined
       };
     }

@@ -172,7 +172,7 @@ export default function VpsPurchase() {
                         <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">{vps.name}</h3>
                         <p className="text-2xl font-bold text-red-500 mb-1">
                           {Number(vps.price).toLocaleString('vi-VN')} ₫
-                          <span className="text-sm font-normal text-gray-500 dark:text-gray-400"> / tháng</span>
+                          <span className="text-sm font-normal text-gray-500 dark:text-gray-400"> / 30 ngày</span>
                         </p>
                       </div>
                       

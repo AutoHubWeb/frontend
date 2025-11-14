@@ -223,9 +223,12 @@ export default function PurchasedTools() {
       setSelectedOrder(null);
       setApiKey("");
     } catch (error: any) {
+      // Extract error message properly
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể cập nhật key";
+      
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể cập nhật key",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -698,7 +701,7 @@ export default function PurchasedTools() {
                       <div>
                         <p className="text-sm text-muted-foreground">Thời hạn</p>
                         <p className="font-medium">
-                          {selectedOrder.toolOrder.duration === -1 ? 'Vĩnh viễn' : `${selectedOrder.toolOrder.duration} tháng`}
+                          {selectedOrder.toolOrder.duration === -1 ? 'Vĩnh viễn' : `${selectedOrder.toolOrder.duration} ngày`}
                         </p>
                       </div>
                       {selectedOrder.toolOrder.expiredAt && (

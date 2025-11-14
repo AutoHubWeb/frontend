@@ -21,14 +21,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Failed to logout:", error);
-    }
-  };
-
   const navigation = [
     {
       name: "Thông tin cá nhân",
@@ -72,8 +64,16 @@ export function Sidebar() {
       ]
     : [];
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    }
+  };
+
   return (
-    <div className="flex h-full w-64 flex-col bg-card border-r border-border overflow-hidden">
+    <div className="flex h-full w-64 flex-col bg-card border-r border-border">
       {/* User Info */}
       <div className="flex items-center space-x-3 p-6 border-b border-border">
         <Avatar className="h-12 w-12">
@@ -103,7 +103,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+      <nav className="flex-1 space-y-1 p-4">
         {navigation.map((item) => (
           <Link
             key={item.href}
@@ -120,17 +120,6 @@ export function Sidebar() {
             <span className="truncate">{item.name}</span>
           </Link>
         ))}
-
-        {/* Logout Button - placed right after History */}
-        <Button
-          variant="ghost"
-          className="flex items-center space-x-3 px-3 py-3 rounded-lg text-base font-medium w-full justify-start hover:bg-accent hover:text-accent-foreground"
-          onClick={handleLogout}
-          data-testid="button-sidebar-logout"
-        >
-          <LogOut className="h-5 w-5 flex-shrink-0" />
-          <span>Đăng xuất</span>
-        </Button>
 
         {/* Admin Section */}
         {adminNavigation.length > 0 && (
@@ -159,6 +148,19 @@ export function Sidebar() {
           </>
         )}
       </nav>
+
+      {/* Logout Button */}
+      <div className="p-4 border-t border-border">
+        <Button
+          variant="ghost"
+          className="w-full justify-start space-x-3 px-3 py-3 rounded-lg text-base font-medium hover:bg-accent hover:text-accent-foreground"
+          onClick={handleLogout}
+          data-testid="button-sidebar-logout"
+        >
+          <LogOut className="h-5 w-5 flex-shrink-0" />
+          <span>Đăng xuất</span>
+        </Button>
+      </div>
     </div>
   );
 }

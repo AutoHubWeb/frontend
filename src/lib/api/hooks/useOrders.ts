@@ -82,7 +82,15 @@ export const useChangeOrderKey = (options?: MutationConfig) => {
     mutationFn: async ({ orderId, apiKey }: { orderId: string; apiKey: string }) => {
       const response = await orderService.changeKey(orderId, { apiKey });
       if (!response.success) {
-        throw new Error(response.message);
+        // Create a proper error object with the response data
+        const error: any = new Error(response.message);
+        error.response = {
+          data: {
+            message: response.message,
+            statusCode: 400
+          }
+        };
+        throw error;
       }
       return response.data;
     },
