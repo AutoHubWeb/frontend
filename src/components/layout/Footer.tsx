@@ -7,8 +7,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Left Column */}
           <div>
-            <h3 className="text-xl font-bold mb-4">LINHCONG.NET</h3>
-            <p className="text-gray-300 mb-2">Hệ thống ban tool - vps - captcha giá rẻ</p>
+            <h3 className="text-xl font-bold mb-4">SHOPTOOLNRO</h3>
+            <p className="text-gray-300 mb-2">Hệ thống bán tools, vps, proxy giá rẻ</p>
             <p className="text-gray-300">Đảm bảo uy tín và chất lượng</p>
           </div>
 
@@ -19,29 +19,34 @@ export function Footer() {
             <p className="text-gray-300 mb-2">uy tín, nhanh chóng</p>
             <p className="text-gray-300 mb-4">luôn đặt quyền lợi của bạn lên hàng đầu</p>
             
-            {/* Contact Buttons */}
-            <div className="flex space-x-2 mt-4">
-              <button
-                onClick={() => window.open('https://zalo.me/linhcong', '_blank')}
-                className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full text-lg transition-colors"
-                title="Liên hệ Zalo"
-              >
-                <FaPhone />
-              </button>
-              <button
-                onClick={() => window.open('https://t.me/linhcong', '_blank')}
-                className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-full text-lg transition-colors"
-                title="Liên hệ Telegram"
-              >
-                <FaTelegram />
-              </button>
-              <button
-                onClick={() => window.open('https://facebook.com/linhcong', '_blank')}
-                className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full text-lg transition-colors"
-                title="Liên hệ Facebook"
-              >
-                <FaFacebook />
-              </button>
+            {/* Contact Information */}
+            <div className="mt-4">
+              <div className="flex items-center mb-2">
+                <FaPhone className="text-blue-500 mr-2" />
+                <span>Zalo: 0877655624</span>
+              </div>
+              <div className="flex items-center mb-2">
+                <FaTelegram className="text-blue-400 mr-2" />
+                <a 
+                  href="https://t.me/shoptooltienthanh" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-300 hover:text-white transition-colors"
+                >
+                  Telegram: @shoptooltienthanh
+                </a>
+              </div>
+              <div className="flex items-center">
+                <FaFacebook className="text-blue-600 mr-2" />
+                <a 
+                  href="https://www.facebook.com/tiienthanhne" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-300 hover:text-white transition-colors"
+                >
+                  Facebook
+                </a>
+              </div>
             </div>
           </div>
         </div>

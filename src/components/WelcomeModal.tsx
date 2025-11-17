@@ -121,14 +121,14 @@ export function WelcomeModal() {
             </h2>
             <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 text-xs font-semibold">
               <Crown className="h-3 w-3 mr-1" />
-              LinhCong.net
+              SHOPTOOLNRO
             </Badge>
           </div>
 
           {/* Description */}
           <div className="bg-gradient-to-br from-white/80 to-purple-50/80 dark:from-gray-800/80 dark:to-purple-900/40 rounded-lg p-3">
             <p className="text-sm text-gray-700 dark:text-gray-300 text-center">
-              🚀 Shop đã tích hợp <span className="font-bold text-purple-600">nạp tự động</span>
+              🚀 Shop đã tích hợp <span className="font-bold text-purple-600">nạp tự động 24/7</span>
             </p>
           </div>
 
@@ -145,7 +145,7 @@ export function WelcomeModal() {
             <Button
               size="sm"
               className="justify-center gap-2 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-              onClick={() => window.open('#', '_blank', 'noopener,noreferrer')}
+              onClick={() => window.open('https://zalo.me/0877655624', '_blank', 'noopener,noreferrer')}
               data-testid="link-group-chat"
             >
               <Users className="h-4 w-4" />
@@ -155,11 +155,11 @@ export function WelcomeModal() {
             <Button
               size="sm"
               className="justify-center gap-2 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
-              onClick={() => window.open('#', '_blank', 'noopener,noreferrer')}
+              onClick={() => window.open('https://zalo.me/0877655624', '_blank', 'noopener,noreferrer')}
               data-testid="link-zalo-chat"
             >
               <MessageSquare className="h-4 w-4" />
-              BOX CHAT ZALO
+              ZALO CSKH 0877655624
             </Button>
           </div>
 

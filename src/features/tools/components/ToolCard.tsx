@@ -26,10 +26,20 @@ export function ToolCard({ tool, onPurchase }: ToolCardProps) {
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 h-[320px] flex flex-col" data-testid={`card-tool-${tool.id}`}>
-      {/* Tool Image - Orange Dragon Ball style */}
+      {/* Tool Image - Orange Dragon Ball style with custom image */}
       <div className="relative bg-gradient-to-br from-orange-400 to-orange-600 h-24 flex items-center justify-center flex-shrink-0">
         <div className="text-center">
-          <div className="text-4xl mb-2">🐉</div>
+          {/* Enhanced custom image with better styling */}
+          <div className="mb-2 flex justify-center">
+            <div className="relative">
+              <div className="absolute -inset-1.5 bg-white/30 rounded-full blur-sm"></div>
+              <img 
+                src="https://shopnro.hitly.click/api/v1/files/static/tool/48AMZRE4aMxNwF.jpg" 
+                alt="Tool Icon" 
+                className="relative w-12 h-12 mx-auto object-contain rounded-full border-2 border-white shadow-md"
+              />
+            </div>
+          </div>
           <div className="text-white font-bold text-xs bg-black/20 px-2 py-1 rounded">NGỌC RỒNG</div>
         </div>
       </div>

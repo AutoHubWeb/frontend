@@ -259,12 +259,12 @@ export default function Deposit() {
                           <img 
                             src="https://cdn.vietqr.io/img/TPB.png" 
                             alt="TPBank" 
-                            className="w-24 h-24"
+                            className="w-25 h-24"
                           />
-                          <span><strong>Ngân hàng:</strong> TPBank</span>
                         </div>
+                          <span><strong>Ngân hàng:</strong> TPBank</span>
                         <p><strong>Số tài khoản:</strong> 00005572823</p>
-                        <p><strong>Chủ tài khoản:</strong> CONG TY TOOLMARKET</p>
+                        <p><strong>Chủ tài khoản:</strong> CONG TY SHOPTOOLNRO</p>
                         <p><strong>Nội dung:</strong> 
                           <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">
                             {userCode || (user ? user.code?.split('@')[0] || 'Đang tải...' : 'Đang tải...')}

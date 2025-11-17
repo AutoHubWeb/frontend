@@ -94,7 +94,7 @@ export default function Landing() {
               viewport={{ once: true }}
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Tại sao chọn ToolMarket?
+                Tại sao chọn SHOPTOOLNRO?
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 Chúng tôi cam kết mang đến cho bạn những công cụ tốt nhất với chất lượng đảm bảo
@@ -163,7 +163,7 @@ export default function Landing() {
                 Sẵn sàng bắt đầu?
               </h2>
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Tham gia cùng hàng nghìn người dùng đã tin tưởng ToolMarket cho nhu cầu công cụ của họ
+                Tham gia cùng hàng nghìn người dùng đã tin tưởng SHOPTOOLNRO cho nhu cầu công cụ của họ
               </p>
               <div className="flex items-center justify-center space-x-4 mb-8">
                 <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -196,7 +196,7 @@ export default function Landing() {
                     <span className="text-primary-foreground font-bold text-sm">TM</span>
                   </div>
                   <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
-                    ToolMarket
+                    SHOPTOOLNRO
                   </span>
                 </div>
                 <p className="text-muted-foreground mb-4 max-w-md">
@@ -226,7 +226,7 @@ export default function Landing() {
             </div>
 
             <div className="border-t border-border mt-12 pt-8 text-center text-sm text-muted-foreground">
-              <p>&copy; 2024 ToolMarket. Tất cả quyền được bảo lưu.</p>
+              <p>&copy; 2024 SHOPTOOLNRO. Tất cả quyền được bảo lưu.</p>
             </div>
           </div>
         </footer>

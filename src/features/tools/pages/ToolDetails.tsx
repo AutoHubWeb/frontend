@@ -57,19 +57,25 @@ export default function ToolDetails() {
       rawDuration: plan.duration // Keep the raw duration value for API calls
     })) || [];
     
+    // Map all images
+    const imageUrls = apiTool.images?.map((image: any) => 
+      `https://shopnro.hitly.click/api/v1/files${image.fileUrl}`
+    ) || [];
+    
     return {
       id: apiTool.id,
       name: apiTool.name,
       description: apiTool.description,
       price: plans[0]?.amount || "0",
       prices: plans,
-      // Fix image URL - use the fileUrl directly
-      imageUrl: `https://shopnro.hitly.click/api/v1/files${apiTool.images?.[0]?.fileUrl}` || "/static/tool/default.jpg",
+      // Keep the first image for backward compatibility
+      imageUrl: imageUrls[0] || "/static/tool/default.jpg",
+      // Add all images
+      imageUrls: imageUrls,
       videoUrl: apiTool.demo || "",
       instructions: "Hướng dẫn sử dụng công cụ sẽ được cung cấp sau khi mua.",
       views: apiTool.viewCount || 0,
       purchases: apiTool.soldQuantity || 0,
-      rating: 4.5, // Default rating
       reviewCount: 0, // Default review count
       categoryId: apiTool.categoryId,
       category: apiTool.category
@@ -285,7 +291,17 @@ export default function ToolDetails() {
                   {/* Tool Banner Image */}
                   <div className="relative bg-gradient-to-br from-orange-400 to-orange-600 h-48 md:h-full flex items-center justify-center">
                     <div className="text-center">
-                      <div className="text-6xl mb-4">🐉</div>
+                      {/* Enhanced custom image with better styling */}
+                      <div className="mb-4 flex justify-center">
+                        <div className="relative">
+                          <div className="absolute -inset-2 bg-white/30 rounded-full blur-sm"></div>
+                          <img 
+                            src="https://shopnro.hitly.click/api/v1/files/static/tool/48AMZRE4aMxNwF.jpg" 
+                            alt="Tool Icon" 
+                            className="relative w-20 h-20 mx-auto object-contain rounded-full border-2 border-white shadow-lg"
+                          />
+                        </div>
+                      </div>
                       <div className="text-white font-bold text-sm bg-black/20 px-3 py-1 rounded-full">NGỌC RỒNG ONLINE</div>
                       <div className="text-white text-xs mt-2 opacity-80">.com</div>
                     </div>
@@ -298,7 +314,7 @@ export default function ToolDetails() {
                     </h1>
                     
                     <div className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                      Người bán: <span className="text-blue-600 font-medium">linhcong</span>
+                      Người bán: <span className="text-blue-600 font-medium">Admin</span>
                     </div>
 
                     {/* Pricing Options */}
@@ -339,7 +355,7 @@ export default function ToolDetails() {
                 <Card>
                   <CardHeader className="border-b">
                     <CardTitle className="text-lg">
-                      THÔNG TIN SẢN PHẨM [Version 1.1.7 - {new Date().toLocaleDateString('vi-VN')} ]
+                      THÔNG TIN SẢN PHẨM
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
@@ -353,10 +369,6 @@ export default function ToolDetails() {
                           <ShoppingCart className="w-4 h-4 mr-1" />
                           <span>{(tool.purchases || 0).toLocaleString('vi-VN')} lượt mua</span>
                         </div>
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                          <Star className="w-4 h-4 mr-1 text-yellow-500 fill-current" />
-                          <span>{Number(tool.rating).toFixed(1)} ({tool.reviewCount} đánh giá)</span>
-                        </div>
                       </div>
                       
                       <Separator />
@@ -369,18 +381,26 @@ export default function ToolDetails() {
                       </div>
 
                       {/* Media Section - Images and Videos */}
-                      {(tool.imageUrl || tool.videoUrl) && (
+                      {(tool.imageUrls?.length > 0 || tool.videoUrl) && (
                         <div>
                           <h3 className="font-semibold mb-3">Hình ảnh demo</h3>
                           <div className="space-y-4">
-                            {tool.imageUrl && tool.imageUrl !== "/static/tool/default.jpg" && (
-                              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
-                                <img 
-                                  src={tool.imageUrl} 
-                                  alt={`Demo ${tool.name}`}
-                                  className="w-full h-auto max-h-96 object-contain"
-                                  data-testid="img-tool-demo"
-                                />
+                            {/* Display all images */}
+                            {tool.imageUrls && tool.imageUrls.length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {tool.imageUrls.map((imageUrl: string, index: number) => (
+                                  <div 
+                                    key={index} 
+                                    className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800"
+                                  >
+                                    <img 
+                                      src={imageUrl} 
+                                      alt={`Demo ${tool.name} ${index + 1}`}
+                                      className="w-full h-auto max-h-96 object-contain"
+                                      data-testid={`img-tool-demo-${index}`}
+                                    />
+                                  </div>
+                                ))}
                               </div>
                             )}
                             
@@ -441,7 +461,7 @@ export default function ToolDetails() {
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                      <h3 className="font-semibold mb-2 text-gray-800 dark:text-gray-200">Bạn có thể thanh toán sản phẩm vào giỏ</h3>
+                      <h3 className="font-semibold mb-2 text-gray-800 dark:text-gray-200">Bạn có thể thanh toán sản phẩm ngay</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">Thanh toán một lúc</p>
                     </div>
                     
