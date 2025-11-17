@@ -375,9 +375,11 @@ export default function ToolDetails() {
                       
                       <div>
                         <h3 className="font-semibold mb-2">Mô tả sản phẩm:</h3>
-                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed" data-testid="text-tool-description">
-                          {tool.description}
-                        </p>
+                        <div 
+                          className="text-gray-700 dark:text-gray-300 leading-relaxed prose prose-headings:font-semibold prose-a:text-blue-600 hover:prose-a:underline prose-strong:font-bold prose-em:italic max-w-none" 
+                          data-testid="text-tool-description"
+                          dangerouslySetInnerHTML={{ __html: tool.description }}
+                        />
                       </div>
 
                       {/* Media Section - Images and Videos */}
