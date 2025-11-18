@@ -86,18 +86,18 @@ export function Sidebar() {
           <p 
             className="font-semibold text-base truncate" 
             data-testid="text-user-name"
-            title={user?.firstName && user?.lastName 
-              ? `${user.firstName} ${user.lastName}`
+            title={user?.fullname
+              ? `${user.fullname}`
               : user?.email || "User"}
           >
-            {user?.firstName && user?.lastName 
-              ? `${user.firstName} ${user.lastName}`
+            {user?.fullname 
+              ? `${user.fullname}`
               : user?.email || "User"}
           </p>
           <p className="text-sm text-muted-foreground truncate" title={user?.email}>
             {user?.email ? (
               <span className="truncate">{user.email}</span>
-            ) : user?.isAdmin ? "Quản trị viên" : "Thành viên"}
+            ) : user?.role === 1 ? "Quản trị viên" : "Thành viên"}
           </p>
         </div>
       </div>

@@ -54,7 +54,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="border-t border-gray-700 mt-8 pt-6 text-center">
           <p className="text-gray-400 text-sm italic">
-            Copyright © 2022 CAPTCHA - DEV BY Mr.DUNG
+            Copyright © 2025
           </p>
         </div>
       </div>
