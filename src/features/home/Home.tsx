@@ -190,8 +190,6 @@ export default function Home() {
     rank: index + 1
   })) || [];
 
-  console.log('Transformed top up users:', topUpUsers);
-
   const { data: vpsResponse, isLoading: vpsLoading, error: vpsError } = useVpsPlans();
   const vpsPlans = (vpsResponse?.data || []).filter(vps => vps.status === 1);
 
@@ -253,7 +251,6 @@ export default function Home() {
       });
     },
     onError: (error: any) => {
-      console.log('Proxy Order Error:', error);
       // Handle insufficient balance error and other errors
       const errorMessage = error?.message || 'Không thể tạo đơn hàng Proxy';
       

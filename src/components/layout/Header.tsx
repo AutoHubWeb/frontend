@@ -49,6 +49,9 @@ export function Header() {
 
   const navigation = [
     { name: "Trang chủ", href: "/" },
+    { name: "Công cụ", href: "/tools" },
+    { name: "VPS", href: "/vps" },
+    { name: "Proxy", href: "/proxy" },
   ];
 
   return (

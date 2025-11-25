@@ -20,7 +20,6 @@ export default function TestOrderPage() {
         title: "Đặt hàng thành công",
         description: `Mã đơn hàng: ${data.code}`,
       });
-      console.log("Order created:", data);
     },
     onError: (error: any) => {
       toast({

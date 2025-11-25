@@ -24,9 +24,6 @@ export class OrderService {
     try {
       const response: any = await apiClient.post<any>(API_ENDPOINTS.ORDERS.BASE, orderData);
       
-      // Log the response for debugging
-      console.log('Order API Response:', response);
-      
       // Transform the response to match our expected format
       // Handle both success and error cases properly
       if (response && response.success === true) {
@@ -312,9 +309,6 @@ export class OrderService {
   async changeKey(orderId: string, keyData: { apiKey: string }): Promise<ApiResponse<OrderItem>> {
     try {
       const response: any = await apiClient.put<any>(`${API_ENDPOINTS.ORDERS.BASE}/${orderId}/update-api-key`, keyData);
-      
-      // Log the response for debugging
-      console.log('Change Key API Response:', response);
       
       // Transform the response to match our expected format
       if (response && (response.success === true || response.status === 200 || response.statusCode === 200)) {

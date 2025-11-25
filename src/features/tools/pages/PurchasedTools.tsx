@@ -267,26 +267,22 @@ export default function PurchasedTools() {
 
   // Pagination functions
   const goToFirstPage = () => {
-    console.log('Going to first page');
     setCurrentPage(1);
   };
 
   const goToPreviousPage = () => {
-    console.log('Going to previous page, current page:', currentPage);
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
   };
 
   const goToNextPage = () => {
-    console.log('Going to next page, current page:', currentPage, 'total pages:', ordersData?.meta?.totalPages);
     if (ordersData?.meta && currentPage < ordersData.meta.totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
 
   const goToLastPage = () => {
-    console.log('Going to last page, total pages:', ordersData?.meta?.totalPages);
     if (ordersData?.meta) {
       setCurrentPage(ordersData.meta.totalPages);
     }
