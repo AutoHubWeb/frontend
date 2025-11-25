@@ -20,10 +20,24 @@ import {
   CheckCircle as CheckCircleIcon,
   Clock as ClockIcon,
   DollarSign as DollarSignIcon,
-  Server as ServerIcon
+  Server as ServerIcon,
+  ArrowDownToLine as DepositIcon,
+  ArrowUpFromLine as WithdrawIcon
 } from "lucide-react";
 import type { Payment } from "@/lib/api/types";
 import { useProxies } from "@/lib/api/hooks";
+import { useUserTransactions } from "@/lib/api/hooks/useTransactions";
+import type { TransactionItem } from "@/lib/api/services/transaction.service";
+
+interface ConvertedTransaction {
+  id: string;
+  userId: string;
+  amount: number;
+  description?: string;
+  status: string;
+  type: string;
+  createdAt: string;
+}
 
 export default function Deposit() {
   const { user, isAuthenticated } = useAuth();
@@ -39,44 +53,19 @@ export default function Deposit() {
   // Extract proxy items from the response
   const proxyItems = proxiesResponse?.items || [];
 
-  const { data: payments, isLoading: paymentsLoading } = useQuery<Payment[]>({
-    queryKey: ["/api/v1/transactions/me"],
-    queryFn: async () => {
-      const tokens = tokenManager.getTokens();
-      if (!tokens?.accessToken) {
-        throw new Error("Unauthorized");
-      }
-      
-      const response = await fetch("https://shopnro.hitly.click/api/v1/transactions/me", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${tokens.accessToken}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch transactions");
-      }
-      
-      const data = await response.json();
-      // The API returns { items: TransactionItem[], meta: {...} }
-      // We need to map TransactionItem to Payment type
-      const items = data.data?.items || data.data || [];
-      
-      // Convert TransactionItem to Payment type
-      return items.map((item: any) => ({
-        id: item.id,
-        userId: item.user?.id,
-        amount: item.amount,
-        description: item.note,
-        status: 'completed', // Default to completed for transaction history
-        type: 'deposit', // Default to deposit for this page
-        createdAt: item.createdAt
-      }));
-    },
-    retry: false,
-  });
+  // Fetch user transactions
+  const { data: userTransactionsResponse, isLoading: transactionsLoading } = useUserTransactions();
+  
+  // Convert TransactionItem to Payment type
+  const payments = (userTransactionsResponse?.items || []).map((item: TransactionItem) => ({
+    id: item.id,
+    userId: typeof item.user?.id === 'string' ? item.user.id : item.user?.id?.type || '',
+    amount: item.amount,
+    description: item.description,
+    status: 'completed', // Default to completed for transaction history
+    type: item.action === 'withdraw' ? 'withdraw' : 'deposit', // Use the action field to determine type
+    createdAt: item.createdAt
+  })) || [];
 
   const depositMutation = useMutation({
     mutationFn: async () => {
@@ -102,7 +91,7 @@ export default function Deposit() {
       setUserCode(code);
       
       // Create QR code URL
-      const qrUrl = `https://qr.sepay.vn/img?bank=TPBank&acc=00005572823&amount=${amount}&des=${code}`;
+      const qrUrl = `https://qr.sepay.vn/img?bank=TPBank&acc=36102903380&amount=${amount}&des=${code}`;
       
       // Open QR code in new tab
       window.open(qrUrl, '_blank');
@@ -149,9 +138,9 @@ export default function Deposit() {
     depositMutation.mutate();
   };
 
-  const quickAmounts = [50000, 100000, 200000, 500000, 1000000, 2000000];
+  const quickAmounts = [10000, 30000, 50000, 100000, 200000, 500000];
 
-  const recentDeposits = payments?.filter(p => p.type === "deposit").slice(0, 5) || [];
+  const recentDeposits = payments?.slice(0, 5) || [];
 
   return (
     <Layout showSidebar={isAuthenticated}>
@@ -263,8 +252,8 @@ export default function Deposit() {
                           />
                         </div>
                           <span><strong>Ngân hàng:</strong> TPBank</span>
-                        <p><strong>Số tài khoản:</strong> 00005572823</p>
-                        <p><strong>Chủ tài khoản:</strong> CONG TY SHOPTOOLNRO</p>
+                        <p><strong>Số tài khoản:</strong> 36102903380</p>
+                        <p><strong>Chủ tài khoản:</strong> NGUYEN QUY LINH CONG</p>
                         <p><strong>Nội dung:</strong> 
                           <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">
                             {userCode || (user ? user.code?.split('@')[0] || 'Đang tải...' : 'Đang tải...')}
@@ -323,10 +312,10 @@ export default function Deposit() {
               {/* Recent Deposits */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Lịch sử nạp tiền gần đây</CardTitle>
+                  <CardTitle>Lịch sử giao dịch gần đây</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {paymentsLoading ? (
+                  {transactionsLoading ? (
                     <div className="space-y-3">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="flex items-center justify-between p-2">
@@ -343,12 +332,23 @@ export default function Deposit() {
                       {recentDeposits.map((payment) => (
                         <div key={payment.id} className="flex items-center justify-between py-2">
                           <div className="flex items-center space-x-2">
-                            <div className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center">
-                              <DollarSignIcon className="w-3 h-3 text-emerald-600" />
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                              payment.type === 'deposit' 
+                                ? 'bg-emerald-100 dark:bg-emerald-900' 
+                                : 'bg-orange-100 dark:bg-orange-900'
+                            }`}>
+                              {payment.type === 'deposit' ? (
+                                <DepositIcon className="w-3 h-3 text-emerald-600" />
+                              ) : (
+                                <WithdrawIcon className="w-3 h-3 text-orange-600" />
+                              )}
                             </div>
                             <div>
-                              <p className="text-sm font-medium">
-                                +{Number(payment.amount).toLocaleString('vi-VN')}₫
+                              <p className={`text-sm font-medium ${
+                                payment.type === 'deposit' ? 'text-emerald-600' : 'text-orange-600'
+                              }`}>
+                                {payment.type === 'deposit' ? '+' : '-'}
+                                {Number(payment.amount).toLocaleString('vi-VN')}₫
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {new Date(payment.createdAt).toLocaleDateString('vi-VN')}
@@ -362,7 +362,7 @@ export default function Deposit() {
                             {payment.status === 'completed' ? (
                               <>
                                 <CheckCircleIcon className="w-3 h-3 mr-1" />
-                                Thành công
+                                {payment.type === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}
                               </>
                             ) : payment.status === 'pending' ? (
                               <>
@@ -378,7 +378,7 @@ export default function Deposit() {
                     </div>
                   ) : (
                     <div className="text-center py-4">
-                      <p className="text-sm text-muted-foreground">Chưa có giao dịch nạp tiền nào</p>
+                      <p className="text-sm text-muted-foreground">Chưa có giao dịch nào</p>
                     </div>
                   )}
                 </CardContent>

@@ -145,7 +145,7 @@ export function WelcomeModal() {
             <Button
               size="sm"
               className="justify-center gap-2 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-              onClick={() => window.open('https://zalo.me/0877655624', '_blank', 'noopener,noreferrer')}
+              onClick={() => window.open('https://zalo.me/g/bradlm266', '_blank', 'noopener,noreferrer')}
               data-testid="link-group-chat"
             >
               <Users className="h-4 w-4" />

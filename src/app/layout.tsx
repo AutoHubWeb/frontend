@@ -6,8 +6,8 @@ import '@/styles/globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AutoHubWeb',
-  description: 'AutoHubWeb - Your tool platform',
+  title: 'Shoptoolnro ',
+  description: 'Shoptoolnro - Bán tool, vps , proxy giá rẻ',
 }
 
 export default function RootLayout({

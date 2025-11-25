@@ -188,7 +188,7 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-4">
                       Bắt đầu khám phá và mua các công cụ chất lượng
                     </p>
-                    <Link href="/tools">
+                    <Link href="/">
                       <Button data-testid="button-browse-tools-from-dashboard">
                         Duyệt công cụ
                         <ArrowRight className="ml-2 h-4 w-4" />

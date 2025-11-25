@@ -188,7 +188,7 @@ export default function History() {
                                   {Number(transaction.amount).toLocaleString('vi-VN')}₫
                                 </p>
                                 <Badge variant="default" className="mt-1">
-                                  {transaction.action === 'deposit' ? 'Nạp tiền' : 'Chi tiêu'}
+                                  {transaction.action === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}
                                 </Badge>
                               </div>
                             </motion.div>

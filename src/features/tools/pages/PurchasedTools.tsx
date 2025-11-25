@@ -381,7 +381,7 @@ export default function PurchasedTools() {
                   : 'Bạn chưa mua công cụ nào. Khám phá thị trường để tìm những công cụ phù hợp với nhu cầu của bạn.'}
               </p>
               {!searchKeyword && (
-                <Link href="/tools">
+                <Link href="/">
                   <Button size="lg" data-testid="button-browse-tools">
                     Duyệt công cụ
                     <ArrowRight className="ml-2 h-4 w-4" />
