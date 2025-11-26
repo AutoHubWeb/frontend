@@ -49,6 +49,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import type { Tool, OrderItem, PaginatedResponse } from "@/lib/api/types";
 import { ORDER_STATUS_ENUM } from "@/lib/api/types";
@@ -106,7 +112,7 @@ export default function PurchasedTools() {
   };
 
   // Function to get status badge variant and text
-  const getStatusInfo = (status: string) => {
+  function getStatusInfo(status: string): { variant: string; text: string; className: string } {
     switch (status) {
       case ORDER_STATUS_ENUM.SUCCESS:
         return { variant: 'default', text: 'Thành công', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' };
@@ -262,6 +268,15 @@ export default function PurchasedTools() {
     toast({
       title: "Đã sao chép",
       description: "Key đã được sao chép vào clipboard",
+    });
+  };
+
+  // Function to copy order code to clipboard
+  const copyOrderCodeToClipboard = (orderCode: string) => {
+    navigator.clipboard.writeText(orderCode);
+    toast({
+      title: "Đã sao chép",
+      description: "Mã đơn hàng đã được sao chép vào clipboard",
     });
   };
 
@@ -426,14 +441,35 @@ export default function PurchasedTools() {
                             </TableHeader>
                             <TableBody>
                               {activeOrders.map((order: OrderItem, index: number) => {
-                                const statusInfo = getStatusInfo(order.status);
+                                const statusInfo: { variant: string; text: string; className: string } = getStatusInfo(order.status);
                                 const toolPlanName = getToolPlanName(order);
                                 const isToolOrder = order.type === 'tool';
                                 const apiKey = order.toolOrder?.apiKey || '';
                                 
                                 return (
                                   <TableRow key={order.id} className="align-top min-h-[73px]">
-                                    <TableCell className="font-medium whitespace-nowrap">{order.code}</TableCell>
+                                    <TableCell className="font-medium whitespace-nowrap">
+                                      <div className="flex items-center gap-2">
+                                        <span>{order.code}</span>
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-6 w-6 p-0"
+                                                onClick={() => copyOrderCodeToClipboard(order.code)}
+                                              >
+                                                <Copy className="h-4 w-4" />
+                                              </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Sao chép mã đơn hàng</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      </div>
+                                    </TableCell>
                                     <TableCell className="whitespace-nowrap">{getProductName(order)}</TableCell>
                                     <TableCell className="whitespace-nowrap">{toolPlanName || 'N/A'}</TableCell>
                                     <TableCell>
