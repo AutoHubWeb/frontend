@@ -296,7 +296,7 @@ export default function ToolDetails() {
                         <div className="relative">
                           <div className="absolute -inset-2 bg-white/30 rounded-full blur-sm"></div>
                           <img 
-                            src="https://shopnro.hitly.click/api/v1/files/static/tool/48AMZRE4aMxNwF.jpg" 
+                            src="https://shopnro.hitly.click/api/v1/files/static/tool/yrgmijIKBUa3.png" 
                             alt="Tool Icon" 
                             className="relative w-20 h-20 mx-auto object-contain rounded-full border-2 border-white shadow-lg"
                           />

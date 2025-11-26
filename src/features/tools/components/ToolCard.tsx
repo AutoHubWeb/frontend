@@ -34,7 +34,7 @@ export function ToolCard({ tool, onPurchase }: ToolCardProps) {
             <div className="relative">
               <div className="absolute -inset-1.5 bg-white/30 rounded-full blur-sm"></div>
               <img 
-                src="https://shopnro.hitly.click/api/v1/files/static/tool/48AMZRE4aMxNwF.jpg" 
+                src="https://shopnro.hitly.click/api/v1/files/static/tool/yrgmijIKBUa3.png" 
                 alt="Tool Icon" 
                 className="relative w-12 h-12 mx-auto object-contain rounded-full border-2 border-white shadow-md"
               />

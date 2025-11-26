@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Shoptoolnro ',
   description: 'Shoptoolnro - Bán tool, vps , proxy giá rẻ',
+  icons: {
+    icon: '/favicon.ico?v=1',
+  },
 }
 
 export default function RootLayout({
