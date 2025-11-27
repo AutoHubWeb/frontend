@@ -59,7 +59,7 @@ export default function ToolDetails() {
     
     // Map all images
     const imageUrls = apiTool.images?.map((image: any) => 
-      `https://shopnro.hitly.click/api/v1/files${image.fileUrl}`
+      `https://api.shoptoolnro.com.vn/api/v1/files${image.fileUrl}`
     ) || [];
     
     return {
@@ -104,7 +104,7 @@ export default function ToolDetails() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "https://shopnro.hitly.click/api/login";
+          window.location.href = "https://api.shoptoolnro.com.vn/api/login";
         }, 500);
         return;
       }
@@ -296,7 +296,7 @@ export default function ToolDetails() {
                         <div className="relative">
                           <div className="absolute -inset-2 bg-white/30 rounded-full blur-sm"></div>
                           <img 
-                            src="https://shopnro.hitly.click/api/v1/files/static/tool/yrgmijIKBUa3.png" 
+                            src="https://api.shoptoolnro.com.vn/api/v1/files/static/tool/IBI8k0xnwtK9veT.png" 
                             alt="Tool Icon" 
                             className="relative w-20 h-20 mx-auto object-contain rounded-full border-2 border-white shadow-lg"
                           />

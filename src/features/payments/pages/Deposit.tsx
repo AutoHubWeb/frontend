@@ -75,7 +75,7 @@ export default function Deposit() {
 
       // Get user code from API me endpoint using GET method
       const tokens = tokenManager.getTokens();
-      const meResponse = await fetch("https://shopnro.hitly.click/api/v1/auth/me", {
+      const meResponse = await fetch("https://api.shoptoolnro.com.vn/api/v1/auth/me", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -121,7 +121,7 @@ export default function Deposit() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "https://shopnro.hitly.click/api/login";
+          window.location.href = "https://api.shoptoolnro.com.vn/api/login";
         }, 500);
         return;
       }

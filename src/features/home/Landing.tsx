@@ -64,7 +64,7 @@ export default function Landing() {
                 <Button 
                   size="lg" 
                   className="px-8 py-4 text-lg font-semibold"
-                  onClick={() => (window.location.href = "https://shopnro.hitly.click/api/login")}
+                  onClick={() => (window.location.href = "https://api.shoptoolnro.com.vn/api/login")}
                   data-testid="button-get-started"
                 >
                   Khám phá công cụ
@@ -176,7 +176,7 @@ export default function Landing() {
               <Button 
                 size="lg"
                 className="px-8 py-4 text-lg font-semibold"
-                onClick={() => (window.location.href = "https://shopnro.hitly.click/api/login")}
+                onClick={() => (window.location.href = "https://api.shoptoolnro.com.vn/api/login")}
                 data-testid="button-join-now"
               >
                 Tham gia ngay

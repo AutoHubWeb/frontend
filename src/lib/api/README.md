@@ -42,8 +42,8 @@ npm install @tanstack/react-query
 ### 2. Configure Environment Variables
 
 ```env
-VITE_API_BASE_URL=https://shopnro.hitly.click
-VITE_AUTH_SERVICE_URL=https://shopnro.hitly.click/api/auth
+VITE_API_BASE_URL=https://api.shoptoolnro.com.vn
+VITE_AUTH_SERVICE_URL=https://api.shoptoolnro.com.vn/api/auth
 VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_key
 VITE_DEBUG=true
 ```
@@ -175,7 +175,7 @@ Centralized configuration management:
 ```typescript
 import { API_CONFIG, API_ENDPOINTS } from '@/lib/api/config';
 
-console.log(API_CONFIG.BASE_URL); // https://shopnro.hitly.click
+console.log(API_CONFIG.BASE_URL); // https://api.shoptoolnro.com.vn
 console.log(API_ENDPOINTS.AUTH.LOGIN); // /api/auth/login
 ```
 

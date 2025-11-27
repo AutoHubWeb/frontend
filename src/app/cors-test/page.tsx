@@ -29,7 +29,7 @@ export default function CorsTestPage() {
       
       // Test a simple GET request
       addResult('Making direct fetch request to /api/v1/tools...', 'info')
-      const response = await fetch('https://shopnro.hitly.click/api/v1/tools', {
+      const response = await fetch('https://api.shoptoolnro.com.vn/api/v1/tools', {
         method: 'GET',
         mode: 'cors',
         credentials: 'include',
@@ -73,7 +73,7 @@ export default function CorsTestPage() {
       addResult('Starting preflight OPTIONS test...', 'info')
       
       // Test OPTIONS request (preflight)
-      const response = await fetch('https://shopnro.hitly.click/api/v1/tools', {
+      const response = await fetch('https://api.shoptoolnro.com.vn/api/v1/tools', {
         method: 'OPTIONS',
         mode: 'cors',
         credentials: 'include',

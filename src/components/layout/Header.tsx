@@ -61,9 +61,9 @@ export function Header() {
           {/* Logo - Left */}
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-3" data-testid="link-logo">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+              <div className="size-12 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
                 <img 
-                  src="https://shopnro.hitly.click/api/v1/files/static/tool/G3N2oN2EPaHV.jpg" 
+                  src="https://api.shoptoolnro.com.vn/api/v1/files/static/tool/Uy9CkidtFUn3WK.jpg" 
                   alt="Logo" 
                   className="w-full h-full object-cover"
                 />
