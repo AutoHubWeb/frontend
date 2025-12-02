@@ -183,9 +183,10 @@ export default function Home() {
   const { data: topUpUsersResponse, isLoading: topUpUsersLoading, error: topUpUsersError } = useTopUpUsers();
   
   // Transform API response to match UI requirements
+  // Ensure full names are displayed without masking
   const topUpUsers = topUpUsersResponse?.map((user: any, index: number) => ({
     id: index.toString(),
-    username: user.fullname,
+    username: user.fullname, // Display full name as received from API
     amount: user.totalRecharge,
     rank: index + 1
   })) || [];
@@ -712,6 +713,7 @@ export default function Home() {
                   ) : (
                     // Data display
                     <div className="space-y-0">
+                      {/* Display full usernames without masking as per user preference */}
                       {topUpUsers.map((user: any, index: number) => (
                         <div
                           key={user.id || index}

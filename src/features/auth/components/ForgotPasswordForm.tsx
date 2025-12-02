@@ -104,114 +104,79 @@ export function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProps) {
   }
 
   return (
-    <div className="flex gap-6">
-      {/* Forgot Password Form */}
-      <div className="flex-1 max-w-md">
-        <Card className="overflow-hidden border-0 shadow-2xl bg-gray-800 text-white">
-          {/* Purple Header */}
-          <CardHeader className="bg-purple-600 text-center py-6">
-            <CardTitle className="text-2xl font-bold text-white">
-              Quên Mật Khẩu
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="p-6 space-y-4">
-            <div className="text-center mb-4">
-              <p className="text-gray-300 text-sm">
-                Nhập email của bạn để nhận hướng dẫn đặt lại mật khẩu
-              </p>
-            </div>
+    <div className="w-full max-w-md mx-auto">
+      <Card className="overflow-hidden border-0 shadow-2xl bg-gray-800 text-white">
+        {/* Purple Header */}
+        <CardHeader className="bg-purple-600 text-center py-6">
+          <CardTitle className="text-2xl font-bold text-white">
+            Quên Mật Khẩu
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="p-6 space-y-4">
+          <div className="text-center mb-4">
+            <p className="text-gray-300 text-sm">
+              Nhập email của bạn để nhận hướng dẫn đặt lại mật khẩu
+            </p>
+          </div>
 
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" data-testid="forgot-password-form">
-              {/* Email Field */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-white font-medium">
-                  Địa Chỉ Email (*)
-                </Label>
-                <Input
-                  id="email"
-                  data-testid="email-input"
-                  type="email"
-                  placeholder="Nhập email của bạn"
-                  {...form.register("email")}
-                  className="bg-gray-100 border-gray-300 text-gray-900 placeholder:text-gray-500"
-                  disabled={forgotPasswordMutation.isPending}
-                />
-                {form.formState.errors.email && (
-                  <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
-                )}
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3"
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" data-testid="forgot-password-form">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white font-medium">
+                Địa Chỉ Email (*)
+              </Label>
+              <Input
+                id="email"
+                data-testid="email-input"
+                type="email"
+                placeholder="Nhập email của bạn"
+                {...form.register("email")}
+                className="bg-gray-100 border-gray-300 text-gray-900 placeholder:text-gray-500"
                 disabled={forgotPasswordMutation.isPending}
-                data-testid="send-email-button"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                {forgotPasswordMutation.isPending ? "Đang gửi..." : "Gửi Email Đặt Lại"}
-              </Button>
-            </form>
-
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-600"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-gray-800 text-gray-400 font-medium">
-                  - HOẶC -
-                </span>
-              </div>
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
+              )}
             </div>
 
-            {/* Back to Login Button */}
+            {/* Submit Button */}
             <Button
-              type="button"
-              variant="outline"
-              className="w-full bg-blue-600 hover:bg-blue-700 border-blue-600 text-white font-medium"
-              onClick={handleBackToLogin}
-              data-testid="back-to-login-button"
+              type="submit"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3"
+              disabled={forgotPasswordMutation.isPending}
+              data-testid="send-email-button"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Quay lại đăng nhập
+              <Send className="w-4 h-4 mr-2" />
+              {forgotPasswordMutation.isPending ? "Đang gửi..." : "Gửi Email Đặt Lại"}
             </Button>
-          </CardContent>
-        </Card>
-      </div>
+          </form>
 
-      {/* Instructions Section */}
-      <div className="w-80">
-        <Card className="overflow-hidden border-0 shadow-2xl bg-gray-800 text-white">
-          {/* Purple Header */}
-          <CardHeader className="bg-purple-600 text-center py-4">
-            <CardTitle className="text-xl font-bold text-white">
-              Hướng Dẫn
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="p-6 space-y-4">
-            <div className="text-sm text-gray-300 space-y-3">
-              <p>
-                <strong>- Nhập đúng địa chỉ email bạn đã đăng ký!</strong>
-              </p>
-              
-              <p>
-                <strong>- Kiểm tra hộp thư đến sau khi gửi yêu cầu!</strong>
-              </p>
-              
-              <p>
-                <strong>- Nếu không thấy email, hãy kiểm tra thư mục spam!</strong>
-              </p>
-              
-              <p>
-                <strong>- Link đặt lại mật khẩu sẽ có thời hạn sử dụng!</strong>
-              </p>
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-600"></div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-gray-800 text-gray-400 font-medium">
+                - HOẶC -
+              </span>
+            </div>
+          </div>
+
+          {/* Back to Login Button */}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full bg-blue-600 hover:bg-blue-700 border-blue-600 text-white font-medium"
+            onClick={handleBackToLogin}
+            data-testid="back-to-login-button"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Quay lại đăng nhập
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

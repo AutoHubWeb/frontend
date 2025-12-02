@@ -63,7 +63,7 @@ export default function Deposit() {
     amount: item.amount,
     description: item.description,
     status: 'completed', // Default to completed for transaction history
-    type: item.action === 'withdraw' ? 'withdraw' : 'deposit', // Use the action field to determine type
+    type: item.action === 'deposit' ? 'deposit' : 'payment', // Use the action field to determine type
     createdAt: item.createdAt
   })) || [];
 
@@ -344,7 +344,10 @@ export default function Deposit() {
                               )}
                             </div>
                             <div>
-                              <p className={`text-sm font-medium ${
+                              <p className="text-sm font-medium">
+                                {payment.description || 'Giao dịch'}
+                              </p>
+                              <p className={`text-xs ${
                                 payment.type === 'deposit' ? 'text-emerald-600' : 'text-orange-600'
                               }`}>
                                 {payment.type === 'deposit' ? '+' : '-'}
@@ -362,7 +365,7 @@ export default function Deposit() {
                             {payment.status === 'completed' ? (
                               <>
                                 <CheckCircleIcon className="w-3 h-3 mr-1" />
-                                {payment.type === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}
+                                {payment.type === 'deposit' ? 'Nạp tiền' : 'Thanh toán'}
                               </>
                             ) : payment.status === 'pending' ? (
                               <>

@@ -166,8 +166,8 @@ export default function History() {
                                   </span>
                                 </div>
                                 <div className="min-w-0"> {/* Added min-w-0 to allow text truncation */}
-                                  <p className="font-medium truncate text-base">
-                                    {transaction.description?.split('[')[0]?.trim() || 'Giao dịch'}
+                                  <p className="font-medium text-base">
+                                    {transaction.description || 'Giao dịch'}
                                   </p>
                                   <p className="text-sm text-muted-foreground truncate">
                                     {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString('vi-VN') : 'N/A'}
@@ -188,7 +188,7 @@ export default function History() {
                                   {Number(transaction.amount).toLocaleString('vi-VN')}₫
                                 </p>
                                 <Badge variant="default" className="mt-1">
-                                  {transaction.action === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}
+                                  {transaction.action === 'deposit' ? 'Nạp tiền' : 'Thanh toán'}
                                 </Badge>
                               </div>
                             </motion.div>
