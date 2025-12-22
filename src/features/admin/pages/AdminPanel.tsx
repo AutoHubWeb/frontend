@@ -24,6 +24,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 ;
 import { useToast } from "@/hooks/use-toast";
 import type { User, Tool, KeyValidation } from "@shared/schema";
@@ -364,9 +365,11 @@ export default function AdminPanel() {
                           transition={{ duration: 0.4, delay: index * 0.05 }}
                         >
                           <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-                            <img 
+                            <Image 
                               src={tool.imageUrl || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=400"} 
                               alt={tool.name}
+                              width={800}
+                              height={400}
                               className="w-full h-48 object-cover"
                             />
                             <CardContent className="p-4">

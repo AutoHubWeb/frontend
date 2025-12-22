@@ -32,11 +32,10 @@ export default function History() {
     limit: itemsPerPage
   });
   
-  // Extract transactions data correctly from the paginated response
-  const userTransactions = userTransactionsResponse?.items || [];
-  
   // Filter transactions based on search query
   const filteredTransactions = useMemo(() => {
+    const userTransactions = userTransactionsResponse?.items || [];
+    
     if (!searchQuery) return userTransactions;
     
     return userTransactions.filter((transaction: TransactionItem) => {
@@ -48,7 +47,7 @@ export default function History() {
         transaction.amount.toString().includes(searchQuery)
       );
     });
-  }, [userTransactions, searchQuery]);
+  }, [userTransactionsResponse, searchQuery]);
 
   // Pagination functions
   const goToFirstPage = () => {

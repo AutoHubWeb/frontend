@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart } from "lucide-react";
@@ -33,9 +34,11 @@ export function ToolCard({ tool, onPurchase }: ToolCardProps) {
           <div className="mb-2 flex justify-center">
             <div className="relative">
               <div className="absolute -inset-1.5 bg-white/30 rounded-full blur-sm"></div>
-              <img 
+              <Image 
                 src="https://api.shoptoolnro.com.vn/api/v1/files/static/tool/IBI8k0xnwtK9veT.png" 
                 alt="Tool Icon" 
+                width={48}
+                height={48}
                 className="relative w-12 h-12 mx-auto object-contain rounded-full border-2 border-white shadow-md"
               />
             </div>

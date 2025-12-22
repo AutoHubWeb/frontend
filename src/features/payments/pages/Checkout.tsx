@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import Image from "next/image"
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -262,9 +263,11 @@ export default function Checkout() {
                   <CardContent className="space-y-6">
                     {/* Product Info */}
                     <div className="flex items-center space-x-4">
-                      <img 
+                      <Image 
                         src={tool.imageUrl || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200"} 
                         alt={tool.name}
+                        width={80}
+                        height={80}
                         className="w-20 h-20 object-cover rounded-lg"
                       />
                       <div className="flex-1">

@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link";
+import Image from "next/image";
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -295,9 +296,11 @@ export default function ToolDetails() {
                       <div className="mb-4 flex justify-center">
                         <div className="relative">
                           <div className="absolute -inset-2 bg-white/30 rounded-full blur-sm"></div>
-                          <img 
+                          <Image 
                             src="https://api.shoptoolnro.com.vn/api/v1/files/static/tool/IBI8k0xnwtK9veT.png" 
                             alt="Tool Icon" 
+                            width={80}
+                            height={80}
                             className="relative w-20 h-20 mx-auto object-contain rounded-full border-2 border-white shadow-lg"
                           />
                         </div>
@@ -395,9 +398,11 @@ export default function ToolDetails() {
                                     key={index} 
                                     className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800"
                                   >
-                                    <img 
+                                    <Image 
                                       src={imageUrl} 
                                       alt={`Demo ${tool.name} ${index + 1}`}
+                                      width={800}
+                                      height={600}
                                       className="w-full h-auto max-h-96 object-contain"
                                       data-testid={`img-tool-demo-${index}`}
                                     />

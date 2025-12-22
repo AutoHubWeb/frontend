@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/app/providers";
 import { useAuth, useLogout } from "@/features/auth";
@@ -62,9 +63,11 @@ export function Header() {
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-3" data-testid="link-logo">
               <div className="size-12 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
-                <img 
+                <Image 
                   src="https://api.shoptoolnro.com.vn/api/v1/files/static/tool/FTRcxkNXhDnPt.png" 
                   alt="Logo" 
+                  width={48}
+                  height={48}
                   className="w-full h-full object-cover"
                 />
               </div>

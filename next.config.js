@@ -11,7 +11,13 @@ const nextConfig = {
     optimizePackageImports: ['@radix-ui', 'lucide-react'],
   },
   images: {
-    domains: ['localhost'],
+    domains: [
+      'localhost', 
+      'api.shoptoolnro.com.vn', 
+      'images.unsplash.com', 
+      'cdn.vietqr.io', 
+      'qr.sepay.vn'
+    ],
   },
 }
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Layout } from "@/components";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth";
@@ -245,9 +246,11 @@ export default function Deposit() {
                       <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Chuyển khoản ngân hàng</h4>
                       <div className="text-sm space-y-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <img 
+                          <Image 
                             src="https://cdn.vietqr.io/img/TPB.png" 
                             alt="TPBank" 
+                            width={100}
+                            height={96}
                             className="w-25 h-24"
                           />
                         </div>

@@ -44,9 +44,14 @@ export default function Tools() {
   const [itemsPerPage, setItemsPerPage] = useState(12);
 
   // Use real API calls instead of mock data
+  // Call both hooks unconditionally to comply with React Hooks rules
+  const searchToolsQuery = useSearchTools(searchQuery, { limit: 100 }); // Get more results for search
+  const toolsQuery = useTools({ page: currentPage, limit: itemsPerPage });
+  
+  // Select the appropriate query result based on searchQuery
   const { data: toolsResponse, isLoading: toolsLoading, error: toolsError } = searchQuery 
-    ? useSearchTools(searchQuery, { limit: 100 }) // Get more results for search
-    : useTools({ page: currentPage, limit: itemsPerPage });
+    ? searchToolsQuery
+    : toolsQuery;
   
   // Transform API tools to format expected by ToolCard component
   const transformTool = (apiTool: Tool) => {
