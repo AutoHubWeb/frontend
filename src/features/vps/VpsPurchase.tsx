@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from "react";
-import { Layout } from "@/components";
+import { useState, useEffect } from "react";
+import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +16,11 @@ import {
   Eye,
   ShoppingCart,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -44,8 +48,10 @@ export default function VpsPurchase() {
   const { toast } = useToast();
   const [selectedVps, setSelectedVps] = useState<VPSPlan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const { data: vpsResponse, isLoading, error } = useVpsPlans();
+  const { data: vpsResponse, isLoading, error } = useVpsPlans({ page: currentPage, limit: itemsPerPage });
   const vpsPlans = (vpsResponse?.data || []).filter(vps => vps.status === 1);
 
   const createOrderMutation = useCreateOrder({
@@ -96,6 +102,35 @@ export default function VpsPurchase() {
       type: "vps",
       vpsId: selectedVps.id,
     });
+  };
+
+  // Pagination functions
+  const goToFirstPage = () => {
+    setCurrentPage(1);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (vpsResponse?.meta && currentPage < vpsResponse.meta.totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToLastPage = () => {
+    if (vpsResponse?.meta) {
+      setCurrentPage(vpsResponse.meta.totalPages);
+    }
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   return (
@@ -155,73 +190,151 @@ export default function VpsPurchase() {
               <Button onClick={() => window.location.reload()}>Tải lại trang</Button>
             </div>
           ) : vpsPlans.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {vpsPlans.map((vps, index) => (
-                <motion.div
-                  key={vps.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 * index }}
-                >
-                  <Card className="overflow-hidden border-2 hover:border-purple-200 dark:hover:border-purple-700 transition-all duration-300 hover:shadow-lg h-full flex flex-col">
-                    <CardContent className="p-6 flex-grow">
-                      <div className="text-center mb-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-800 dark:to-purple-800 rounded-lg flex items-center justify-center mx-auto mb-3">
-                          <Server className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">{vps.name}</h3>
-                        <p className="text-2xl font-bold text-red-500 mb-1">
-                          {Number(vps.price).toLocaleString('vi-VN')} ₫
-                          <span className="text-sm font-normal text-gray-500 dark:text-gray-400"> / 30 ngày</span>
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-3 mb-4">
-                        <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
-                          <Cpu className="w-4 h-4" />
-                          <span className="font-medium">{vps.cpu} CPU</span>
-                        </div>
-                        <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
-                          <HardDrive className="w-4 h-4" />
-                          <span className="font-medium">{vps.ram} GB RAM</span>
-                        </div>
-                        <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
-                          <HardDrive className="w-4 h-4" />
-                          <span className="font-medium">{vps.disk} GB SSD</span>
-                        </div>
-                        {vps.location && (
-                          <div className="text-center text-sm text-blue-600 dark:text-blue-400 font-medium">
-                            {vps.location}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {vpsPlans.map((vps, index) => (
+                  <motion.div
+                    key={vps.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.1 * index }}
+                  >
+                    <Card className="overflow-hidden border-2 hover:border-purple-200 dark:hover:border-purple-700 transition-all duration-300 hover:shadow-lg h-full flex flex-col">
+                      <CardContent className="p-6 flex-grow">
+                        <div className="text-center mb-4">
+                          <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-800 dark:to-purple-800 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <Server className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                           </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center justify-center space-x-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        <div className="flex items-center space-x-1">
-                          <Eye className="w-4 h-4" />
-                          <span>Đã bán: {vps.soldQuantity}</span>
+                          <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white">{vps.name}</h3>
+                          <p className="text-2xl font-bold text-red-500 mb-1">
+                            {Number(vps.price).toLocaleString('vi-VN')} ₫
+                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400"> / 30 ngày</span>
+                          </p>
                         </div>
-                        <div>
-                          <span>Lượt xem: {vps.viewCount}</span>
+                        
+                        <div className="space-y-3 mb-4">
+                          <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
+                            <Cpu className="w-4 h-4" />
+                            <span className="font-medium">{vps.cpu} CPU</span>
+                          </div>
+                          <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
+                            <HardDrive className="w-4 h-4" />
+                            <span className="font-medium">{vps.ram} GB RAM</span>
+                          </div>
+                          <div className="flex items-center justify-center space-x-2 text-blue-600 dark:text-blue-400">
+                            <HardDrive className="w-4 h-4" />
+                            <span className="font-medium">{vps.disk} GB SSD</span>
+                          </div>
+                          {vps.location && (
+                            <div className="text-center text-sm text-blue-600 dark:text-blue-400 font-medium">
+                              {vps.location}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      
-                      <Button 
-                        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium mt-auto"
-                        onClick={() => handleSelectVps(vps)}
-                      >
-                        MUA NGAY
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
+                        
+                        <div className="flex items-center justify-center space-x-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                          <div className="flex items-center space-x-1">
+                            <Eye className="w-4 h-4" />
+                            <span>Đã bán: {vps.soldQuantity}</span>
+                          </div>
+                          <div>
+                            <span>Lượt xem: {vps.viewCount}</span>
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium mt-auto"
+                          onClick={() => handleSelectVps(vps)}
+                        >
+                          MUA NGAY
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
           ) : (
             <div className="text-center py-16">
               <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Không có VPS nào</h3>
               <p className="text-muted-foreground">Hiện tại không có gói VPS nào khả dụng.</p>
+            </div>
+          )}
+          
+          {/* Pagination Controls */}
+          {vpsResponse?.meta && vpsResponse.meta.totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                Tổng cộng {vpsResponse.meta.total} VPS
+              </div>
+              
+              <div className="flex items-center space-x-1">
+                {/* First Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToFirstPage}
+                  disabled={currentPage === 1}
+                  className="px-3 hidden sm:inline-flex"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Previous Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="px-3"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Trước</span>
+                </Button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center mx-2">
+                  <span className="text-sm font-medium px-3 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 rounded-md">
+                    {currentPage} / {vpsResponse.meta.totalPages}
+                  </span>
+                </div>
+                
+                {/* Next Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={currentPage >= vpsResponse.meta.totalPages}
+                  className="px-3"
+                >
+                  <span className="mr-1 hidden sm:inline">Sau</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                
+                {/* Last Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToLastPage}
+                  disabled={currentPage >= vpsResponse.meta.totalPages}
+                  className="px-3 hidden sm:inline-flex"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:inline">Hiển thị:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="h-8 rounded border text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 px-2"
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="30">30</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
             </div>
           )}
         </div>

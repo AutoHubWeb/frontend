@@ -63,7 +63,7 @@ export function Header() {
             <Link href="/" className="flex items-center space-x-3" data-testid="link-logo">
               <div className="size-12 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
                 <img 
-                  src="https://api.shoptoolnro.com.vn/api/v1/files/static/tool/Uy9CkidtFUn3WK.jpg" 
+                  src="https://api.shoptoolnro.com.vn/api/v1/files/static/tool/FTRcxkNXhDnPt.png" 
                   alt="Logo" 
                   className="w-full h-full object-cover"
                 />

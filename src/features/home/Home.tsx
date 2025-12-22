@@ -26,7 +26,11 @@ import {
   Eye,
   ChevronUp,
   X,
-  ChevronDown
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react";
 import {
   Dialog,
@@ -64,12 +68,16 @@ export default function Home() {
   const [selectedProxy, setSelectedProxy] = useState<any | null>(null);
   const [vpsConfirmDialogOpen, setVpsConfirmDialogOpen] = useState(false);
   const [selectedVps, setSelectedVps] = useState<any | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [vpsCurrentPage, setVpsCurrentPage] = useState(1);
+  const [proxyCurrentPage, setProxyCurrentPage] = useState(1);
 
   // Use real API calls for tools, keep mock data for VPS
-  const { data: toolsResponse, isLoading: toolsLoading, error: toolsError } = useTools();
+  const { data: toolsResponse, isLoading: toolsLoading, error: toolsError } = useTools({ page: currentPage, limit: itemsPerPage });
   
   // Add proxy data fetching
-  const { data: proxyResponse, isLoading: proxyLoading, error: proxyError } = useProxies();
+  const { data: proxyResponse, isLoading: proxyLoading, error: proxyError } = useProxies({ page: proxyCurrentPage, limit: itemsPerPage });
   
   // Transform API tools to format expected by ToolCard component
   const transformTool = (apiTool: Tool) => {
@@ -179,6 +187,106 @@ export default function Home() {
     handlePurchaseSuccess();
   };
 
+  // Pagination functions
+  const goToFirstPage = () => {
+    setCurrentPage(1);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (toolsResponse?.meta?.total) {
+      const totalPages = Math.ceil(toolsResponse.meta.total / itemsPerPage);
+      if (currentPage < totalPages) {
+        setCurrentPage(currentPage + 1);
+      }
+    }
+  };
+
+  const goToLastPage = () => {
+    if (toolsResponse?.meta?.total) {
+      const totalPages = Math.ceil(toolsResponse.meta.total / itemsPerPage);
+      setCurrentPage(totalPages);
+    }
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to first page when changing items per page
+    setVpsCurrentPage(1);
+    setProxyCurrentPage(1);
+  };
+
+// VPS and Proxy data fetching
+  const { data: vpsResponse, isLoading: vpsLoading, error: vpsError } = useVpsPlans({ page: vpsCurrentPage, limit: itemsPerPage });
+  const vpsPlans = (vpsResponse?.data || []).filter(vps => vps.status === 1);
+  
+  // Calculate total pages for pagination display
+  const totalPages = toolsResponse?.meta?.total ? Math.ceil(toolsResponse.meta.total / itemsPerPage) : 1;
+  const vpsTotalPages = vpsResponse?.meta?.total && vpsResponse?.meta?.limit ? Math.ceil(vpsResponse.meta.total / vpsResponse.meta.limit) : 1;
+  const proxyTotalPages = proxyResponse?.meta?.total && proxyResponse?.meta?.limit ? Math.ceil(proxyResponse.meta.total / proxyResponse.meta.limit) : 1;
+
+  // VPS Pagination functions
+  const goToFirstVpsPage = () => {
+    setVpsCurrentPage(1);
+  };
+
+  const goToPreviousVpsPage = () => {
+    if (vpsCurrentPage > 1) {
+      setVpsCurrentPage(vpsCurrentPage - 1);
+    }
+  };
+
+  const goToNextVpsPage = () => {
+    if (vpsResponse?.meta?.total && vpsResponse?.meta?.limit) {
+      const totalPages = Math.ceil(vpsResponse.meta.total / vpsResponse.meta.limit);
+      if (vpsCurrentPage < totalPages) {
+        setVpsCurrentPage(vpsCurrentPage + 1);
+      }
+    }
+  };
+
+  const goToLastVpsPage = () => {
+    if (vpsResponse?.meta?.total && vpsResponse?.meta?.limit) {
+      const totalPages = Math.ceil(vpsResponse.meta.total / vpsResponse.meta.limit);
+      setVpsCurrentPage(totalPages);
+    }
+  };
+
+  // Proxy Pagination functions
+  const goToFirstProxyPage = () => {
+    setProxyCurrentPage(1);
+  };
+
+  const goToPreviousProxyPage = () => {
+    if (proxyCurrentPage > 1) {
+      setProxyCurrentPage(proxyCurrentPage - 1);
+    }
+  };
+
+  const goToNextProxyPage = () => {
+    if (proxyResponse?.meta?.total && proxyResponse?.meta?.limit) {
+      const totalPages = Math.ceil(proxyResponse.meta.total / proxyResponse.meta.limit);
+      if (proxyCurrentPage < totalPages) {
+        setProxyCurrentPage(proxyCurrentPage + 1);
+      }
+    }
+  };
+
+  const goToLastProxyPage = () => {
+    if (proxyResponse?.meta?.total && proxyResponse?.meta?.limit) {
+      const totalPages = Math.ceil(proxyResponse.meta.total / proxyResponse.meta.limit);
+      setProxyCurrentPage(totalPages);
+    }
+  };
+
+
+
   // Add this new hook for fetching top-up users
   const { data: topUpUsersResponse, isLoading: topUpUsersLoading, error: topUpUsersError } = useTopUpUsers();
   
@@ -190,9 +298,6 @@ export default function Home() {
     amount: user.totalRecharge,
     rank: index + 1
   })) || [];
-
-  const { data: vpsResponse, isLoading: vpsLoading, error: vpsError } = useVpsPlans();
-  const vpsPlans = (vpsResponse?.data || []).filter(vps => vps.status === 1);
 
   const createOrderMutation = useCreateOrder({
     onSuccess: (data) => {
@@ -437,6 +542,84 @@ export default function Home() {
                 </p>
               </div>
             )}
+            
+            {/* Pagination Controls */}
+            {toolsResponse?.meta && totalPages > 1 && !searchQuery && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Tổng cộng {toolsResponse.meta.total} công cụ
+                </div>
+                
+                <div className="flex items-center space-x-1">
+                  {/* First Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToFirstPage}
+                    disabled={currentPage === 1}
+                    className="px-3 hidden sm:inline-flex"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Previous Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className="px-3"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="ml-1 hidden sm:inline">Trước</span>
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  <div className="flex items-center mx-2">
+                    <span className="text-sm font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-md">
+                      {currentPage} / {totalPages}
+                    </span>
+                  </div>
+                  
+                  {/* Next Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextPage}
+                    disabled={currentPage >= totalPages}
+                    className="px-3"
+                  >
+                    <span className="mr-1 hidden sm:inline">Sau</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Last Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToLastPage}
+                    disabled={currentPage >= totalPages}
+                    className="px-3 hidden sm:inline-flex"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:inline">Hiển thị:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="h-8 rounded border text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 px-2"
+                  >
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* VPS & PROXY Section */}
@@ -566,6 +749,70 @@ export default function Home() {
                 <p className="text-muted-foreground">Không có VPS nào khả dụng</p>
               </div>
             )}
+            
+            {/* VPS Pagination Controls */}
+            {vpsResponse?.meta && vpsTotalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Tổng cộng {vpsResponse.meta.total} VPS
+                </div>
+                
+                <div className="flex items-center space-x-1">
+                  {/* First Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToFirstVpsPage}
+                    disabled={vpsCurrentPage === 1}
+                    className="px-3 hidden sm:inline-flex"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Previous Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousVpsPage}
+                    disabled={vpsCurrentPage === 1}
+                    className="px-3"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="ml-1 hidden sm:inline">Trước</span>
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  <div className="flex items-center mx-2">
+                    <span className="text-sm font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-md">
+                      {vpsCurrentPage} / {vpsTotalPages}
+                    </span>
+                  </div>
+                  
+                  {/* Next Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextVpsPage}
+                    disabled={vpsCurrentPage >= vpsTotalPages}
+                    className="px-3"
+                  >
+                    <span className="mr-1 hidden sm:inline">Sau</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Last Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToLastVpsPage}
+                    disabled={vpsCurrentPage >= vpsTotalPages}
+                    className="px-3 hidden sm:inline-flex"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Proxy Display */}
@@ -660,6 +907,69 @@ export default function Home() {
             </div>
           )}
 
+          {/* Proxy Pagination Controls */}
+          {proxyResponse?.meta && proxyTotalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                Tổng cộng {proxyResponse.meta.total} Proxy
+              </div>
+              
+              <div className="flex items-center space-x-1">
+                {/* First Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToFirstProxyPage}
+                  disabled={proxyCurrentPage === 1}
+                  className="px-3 hidden sm:inline-flex"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Previous Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPreviousProxyPage}
+                  disabled={proxyCurrentPage === 1}
+                  className="px-3"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Trước</span>
+                </Button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center mx-2">
+                  <span className="text-sm font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-md">
+                    {proxyCurrentPage} / {proxyTotalPages}
+                  </span>
+                </div>
+                
+                {/* Next Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextProxyPage}
+                  disabled={proxyCurrentPage >= proxyTotalPages}
+                  className="px-3"
+                >
+                  <span className="mr-1 hidden sm:inline">Sau</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                
+                {/* Last Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToLastProxyPage}
+                  disabled={proxyCurrentPage >= proxyTotalPages}
+                  className="px-3 hidden sm:inline-flex"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
           {/* Statistics Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

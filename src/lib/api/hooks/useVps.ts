@@ -9,17 +9,21 @@ import {
   VPS,
   PaginatedResponse,
   QueryConfig,
-  MutationConfig 
+  MutationConfig,
+  PaginationParams
 } from '../types';
 import { parseApiError } from '../errors';
 import { vpsService } from '../services/vps.service';
 
 // Query hooks
-export const useVpsPlans = (options?: QueryConfig) => {
+export const useVpsPlans = (
+  params?: PaginationParams,
+  options?: QueryConfig
+) => {
   return useQuery({
-    queryKey: ['vps'],
+    queryKey: ['vps', params],
     queryFn: async () => {
-      const response = await vpsService.getVpsPlans();
+      const response = await vpsService.getVpsPlans(params);
       if (!response.success) {
         throw new Error(response.message);
       }

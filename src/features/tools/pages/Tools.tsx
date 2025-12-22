@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components";
 import { ToolCard } from "@/features/tools";
 import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth";
 import { useToast } from "@/hooks/use-toast";
-import { useTools } from "@/lib/api/hooks/useTools";
+import { useTools, useSearchTools } from "@/lib/api/hooks/useTools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,11 @@ import {
   Search, 
   Filter, 
   ShoppingCart,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react";
 import {
   Dialog,
@@ -36,9 +40,13 @@ export default function Tools() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState<any | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   // Use real API calls instead of mock data
-  const { data: toolsResponse, isLoading: toolsLoading, error: toolsError } = useTools();
+  const { data: toolsResponse, isLoading: toolsLoading, error: toolsError } = searchQuery 
+    ? useSearchTools(searchQuery, { limit: 100 }) // Get more results for search
+    : useTools({ page: currentPage, limit: itemsPerPage });
   
   // Transform API tools to format expected by ToolCard component
   const transformTool = (apiTool: Tool) => {
@@ -97,6 +105,13 @@ export default function Tools() {
     return matchesSearch;
   });
 
+  // For pagination, we use the raw tools (already paginated from API)
+  // For search, we use filteredTools (all tools matching search)
+  const displayTools = searchQuery ? filteredTools : tools;
+
+  // Calculate total pages for pagination display
+  const totalPages = toolsResponse?.meta?.total ? Math.ceil(toolsResponse.meta.total / itemsPerPage) : 1;
+
   const handlePurchase = (toolId: string) => {
     if (!isAuthenticated) {
       toast({
@@ -118,6 +133,46 @@ export default function Tools() {
     if (!selectedTool) return;
     handlePurchaseSuccess();
   };
+
+  // Pagination functions
+  const goToFirstPage = () => {
+    setCurrentPage(1);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    // Calculate totalPages based on total items and items per page
+    if (toolsResponse?.meta?.total) {
+      const totalPages = Math.ceil(toolsResponse.meta.total / itemsPerPage);
+      if (currentPage < totalPages) {
+        setCurrentPage(currentPage + 1);
+      }
+    }
+  };
+
+  const goToLastPage = () => {
+    if (toolsResponse?.meta?.total) {
+      const totalPages = Math.ceil(toolsResponse.meta.total / itemsPerPage);
+      setCurrentPage(totalPages);
+    }
+  };
+
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Reset to first page when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   return (
     <Layout>
@@ -150,7 +205,7 @@ export default function Tools() {
                 <div className="flex items-center space-x-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 rounded-full border border-cyan-200 dark:border-cyan-800">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="text-sm text-gray-600 dark:text-gray-300">
-                    {filteredTools.length} công cụ có sẵn
+                    {toolsResponse?.meta?.total || filteredTools.length} công cụ có sẵn
                   </span>
                 </div>
                 <div className="flex items-center space-x-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 rounded-full border border-cyan-200 dark:border-cyan-800">
@@ -198,7 +253,7 @@ export default function Tools() {
                       </>
                     ) : (
                       <>
-                        Hiển thị <span className="font-semibold text-cyan-600 dark:text-cyan-400">{filteredTools.length}</span> công cụ chuyên nghiệp
+                        Hiển thị <span className="font-semibold text-cyan-600 dark:text-cyan-400">{tools.length}</span> công cụ chuyên nghiệp
                       </>
                     )}
                   </p>
@@ -236,9 +291,9 @@ export default function Tools() {
                   </Card>
                 ))}
               </div>
-            ) : filteredTools.length > 0 ? (
+            ) : displayTools.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {filteredTools.map((tool, index) => (
+                {displayTools.map((tool, index) => (
                   <motion.div
                     key={tool.id}
                     initial={{ opacity: 0, y: 30, scale: 0.9 }}
@@ -280,6 +335,84 @@ export default function Tools() {
                       Xóa tìm kiếm
                     </Button>
                   )}
+                </div>
+              </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {toolsResponse?.meta && totalPages > 1 && !searchQuery && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Tổng cộng {toolsResponse.meta.total} công cụ
+                </div>
+                
+                <div className="flex items-center space-x-1">
+                  {/* First Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToFirstPage}
+                    disabled={currentPage === 1}
+                    className="px-3 hidden sm:inline-flex"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Previous Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className="px-3"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="ml-1 hidden sm:inline">Trước</span>
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  <div className="flex items-center mx-2">
+                    <span className="text-sm font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-md">
+                      {currentPage} / {totalPages}
+                    </span>
+                  </div>
+                  
+                  {/* Next Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextPage}
+                    disabled={currentPage >= totalPages}
+                    className="px-3"
+                  >
+                    <span className="mr-1 hidden sm:inline">Sau</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Last Page Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToLastPage}
+                    disabled={currentPage >= totalPages}
+                    className="px-3 hidden sm:inline-flex"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:inline">Hiển thị:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="h-8 rounded border text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 px-2"
+                  >
+                    <option value="12">12</option>
+                    <option value="24">24</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                  </select>
                 </div>
               </div>
             )}

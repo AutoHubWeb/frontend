@@ -7,7 +7,8 @@ import { apiClient } from '../client';
 import { API_ENDPOINTS } from '../config';
 import { 
   ApiResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  PaginationParams
 } from '../types';
 
 // Proxy types based on the API response you provided
@@ -29,6 +30,7 @@ export interface ProxyResponse {
   meta: {
     total: number;
     page: number;
+    limit: number;
   };
 }
 
@@ -36,15 +38,19 @@ export class ProxyService {
   /**
    * Get list of proxies
    */
-  async getProxies(): Promise<ApiResponse<ProxyResponse>> {
-    const response = await apiClient.get<any>(API_ENDPOINTS.PROXY.BASE);
+  async getProxies(params?: PaginationParams): Promise<ApiResponse<ProxyResponse>> {
+    const response = await apiClient.get<any>(API_ENDPOINTS.PROXY.BASE, params);
     // Transform the response to match our expected format
     return {
       success: response.success,
       message: response.message,
       data: {
         items: response.data?.items || [],
-        meta: response.data?.meta || { total: 0, page: 1 }
+        meta: {
+          total: response.data?.meta?.total || 0,
+          page: response.data?.meta?.page || 1,
+          limit: params?.limit || 10
+        }
       }
     };
   }

@@ -8,16 +8,17 @@ import { API_ENDPOINTS } from '../config';
 import { 
   VPS,
   PaginatedResponse,
-  ApiResponse 
+  ApiResponse,
+  PaginationParams
 } from '../types';
 
 export class VpsService {
   /**
    * Get all VPS plans
    */
-  async getVpsPlans(): Promise<ApiResponse<PaginatedResponse<VPS>>> {
+  async getVpsPlans(params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<VPS>>> {
     try {
-      const response: any = await apiClient.get<any>(API_ENDPOINTS.VPS.BASE);
+      const response: any = await apiClient.get<any>(API_ENDPOINTS.VPS.BASE, params);
       
       // Transform the response to match our expected format
       if (response && response.success === true) {
