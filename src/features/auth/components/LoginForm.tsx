@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useToast } from "@/hooks/use-toast"
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useRouter } from "next/navigation"
 import { Lock, User, Eye, EyeOff, LogIn } from "lucide-react";
 import { useAuth } from "@/features/auth";
@@ -22,7 +22,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberAccount, setRememberAccount] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const { login, isLoading } = useAuth();
 
   // Form setup with validation

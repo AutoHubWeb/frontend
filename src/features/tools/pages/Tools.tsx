@@ -5,7 +5,7 @@ import { Layout } from "@/components";
 import { ToolCard } from "@/features/tools";
 import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useTools, useSearchTools } from "@/lib/api/hooks/useTools";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import type { Tool } from "@/lib/api/types";
 
 export default function Tools() {
   const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");

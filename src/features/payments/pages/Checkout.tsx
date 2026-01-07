@@ -8,7 +8,7 @@ import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { isUnauthorizedError } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +32,7 @@ export default function Checkout() {
   const router = useRouter()
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const queryClient = useQueryClient();
 
   const [selectedToolId, setSelectedToolId] = useState<string>("");
@@ -60,7 +60,7 @@ export default function Checkout() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "https://api.shoptoolnro.com.vn/api/login";
+        window.location.href = "/login";
       }, 500);
     }
   }, [isAuthenticated, toast]);

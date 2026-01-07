@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useAuth } from "@/features/auth";
 import { isUnauthorizedError } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
@@ -62,7 +62,7 @@ import { useUserOrders, useChangeOrderKey } from "@/lib/api/hooks/useOrders";
 
 export default function PurchasedTools() {
   const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const queryClient = useQueryClient();
 
   const [changeKeyDialogOpen, setChangeKeyDialogOpen] = useState(false);
@@ -71,18 +71,60 @@ export default function PurchasedTools() {
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1); // Need to keep for pagination functions
+  const [itemsPerPage, setItemsPerPage] = useState(1000); // Large number to fetch all items
+  const [allOrdersFetched, setAllOrdersFetched] = useState(false);
 
-  const { data: ordersData, isLoading } = useUserOrders(searchKeyword || undefined, currentPage, itemsPerPage);
+  // Fetch all orders when search keyword changes or component mounts
+  const { data: allOrdersData, isLoading: allOrdersLoading } = useUserOrders(searchKeyword || undefined, 1, 1000); // Fetch all orders in one request (max limit)
   
-  // Debug: Log ordersData and currentPage to see what we're getting
+  // Filter to only active (non-expired) orders
+  const activeOrders = useMemo(() => {
+    if (!allOrdersData?.data) return [];
+    
+    return allOrdersData.data.filter((order: OrderItem) => {
+      // If the order is marked as overdue, cancel, or fail, it's considered expired
+      if (order.status === ORDER_STATUS_ENUM.OVERDUE || 
+          order.status === ORDER_STATUS_ENUM.CANCEL || 
+          order.status === ORDER_STATUS_ENUM.FAIL) {
+        return false;
+      }
+      
+      // Check expiration date if available
+      let expirationDate: Date | null = null;
+      if (order.type === 'tool' && order.toolOrder?.expiredAt) {
+        expirationDate = new Date(order.toolOrder.expiredAt);
+      } else if (order.type === 'vps' && order.vpsOrder?.expiredAt) {
+        expirationDate = new Date(order.vpsOrder.expiredAt);
+      } else if (order.type === 'proxy' && order.proxyOrder?.expiredAt) {
+        expirationDate = new Date(order.proxyOrder.expiredAt);
+      }
+      
+      // If we have an expiration date, check if it's in the past
+      if (expirationDate && expirationDate < new Date()) {
+        return false;
+      }
+      
+      // If we reach here, the order is active
+      return true;
+    });
+  }, [allOrdersData]);
+  
+  // For the purchased tools page, show all active orders on a single page without pagination
+  const paginatedActiveOrders = activeOrders; // Show all active orders, no pagination
+  
+  // No pagination - all active orders are shown
+  const totalPages = 1;
+  
+  const isLoading = allOrdersLoading;
+  
+  // Debug: Log allOrdersData and currentPage to see what we're getting
   useEffect(() => {
-    if (ordersData) {
-      console.log('Orders Data:', ordersData);
+    if (allOrdersData) {
+      console.log('All Orders Data:', allOrdersData);
     }
     console.log('Current Page:', currentPage);
-  }, [ordersData, currentPage]);
+  }, [allOrdersData, currentPage]);
 
   const changeKeyMutation = useChangeOrderKey();
 
@@ -162,40 +204,9 @@ export default function PurchasedTools() {
     return []; // Return empty array since we're hiding expired orders completely
   };
 
-  // Function to filter active orders (not expired)
-  const getActiveOrders = () => {
-    if (!ordersData?.data) return [];
-    
-    return ordersData.data.filter((order: OrderItem) => {
-      // If the order is marked as overdue, cancel, or fail, it's considered expired
-      if (order.status === ORDER_STATUS_ENUM.OVERDUE || 
-          order.status === ORDER_STATUS_ENUM.CANCEL || 
-          order.status === ORDER_STATUS_ENUM.FAIL) {
-        return false;
-      }
-      
-      // Check expiration date if available
-      let expirationDate: Date | null = null;
-      if (order.type === 'tool' && order.toolOrder?.expiredAt) {
-        expirationDate = new Date(order.toolOrder.expiredAt);
-      } else if (order.type === 'vps' && order.vpsOrder?.expiredAt) {
-        expirationDate = new Date(order.vpsOrder.expiredAt);
-      } else if (order.type === 'proxy' && order.proxyOrder?.expiredAt) {
-        expirationDate = new Date(order.proxyOrder.expiredAt);
-      }
-      
-      // If we have an expiration date, check if it's in the past
-      if (expirationDate && expirationDate < new Date()) {
-        return false;
-      }
-      
-      // If we reach here, the order is active
-      return true;
-    });
-  };
 
-  const expiredOrders = getExpiredOrders();
-  const activeOrders = getActiveOrders();
+
+
 
   // Function to handle change key button click
   const handleChangeKeyClick = (order: OrderItem) => {
@@ -280,7 +291,7 @@ export default function PurchasedTools() {
     });
   };
 
-  // Pagination functions
+  // Pagination functions - kept for potential future use, but currently all items are shown on one page
   const goToFirstPage = () => {
     setCurrentPage(1);
   };
@@ -292,15 +303,17 @@ export default function PurchasedTools() {
   };
 
   const goToNextPage = () => {
-    if (ordersData?.meta && currentPage < ordersData.meta.totalPages) {
+    // Since we're showing all items on one page, this shouldn't be needed
+    // But keeping the function for potential future use
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
 
   const goToLastPage = () => {
-    if (ordersData?.meta) {
-      setCurrentPage(ordersData.meta.totalPages);
-    }
+    // Since we're showing all items on one page, this shouldn't be needed
+    // But keeping the function for potential future use
+    setCurrentPage(totalPages);
   };
 
   // Get expiration date based on order type
@@ -380,7 +393,7 @@ export default function PurchasedTools() {
                 </Card>
               ))}
             </div>
-          ) : activeOrders.length === 0 ? (
+          ) : paginatedActiveOrders.length === 0 ? (
             <div className="text-center py-16">
               <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
               <h3 className="text-2xl font-bold mb-4">
@@ -421,7 +434,7 @@ export default function PurchasedTools() {
                           <Skeleton className="w-full h-10 mb-2" />
                           <Skeleton className="w-full h-10" />
                         </div>
-                      ) : activeOrders.length > 0 ? (
+                      ) : paginatedActiveOrders.length > 0 ? (
                         <>
                           <UITable>
                             <TableHeader>
@@ -440,7 +453,7 @@ export default function PurchasedTools() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {activeOrders.map((order: OrderItem, index: number) => {
+                              {paginatedActiveOrders.map((order: OrderItem, index: number) => {
                                 const statusInfo: { variant: string; text: string; className: string } = getStatusInfo(order.status);
                                 const toolPlanName = getToolPlanName(order);
                                 const isToolOrder = order.type === 'tool';
@@ -556,64 +569,14 @@ export default function PurchasedTools() {
                             </TableBody>
                           </UITable>
                           
-                          {/* Pagination */}
-                          {ordersData?.meta && activeOrders && activeOrders.length > 0 && (
+                          {/* No pagination - show total count only */}
+                          {activeOrders && activeOrders.length > 0 && (
                             <div className="flex items-center justify-between px-4 py-3 border-t">
                               <div className="text-sm text-muted-foreground">
                                 Tổng cộng {activeOrders.length} đơn hàng
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={goToFirstPage}
-                                  disabled={currentPage === 1}
-                                >
-                                  <ChevronsLeft className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={goToPreviousPage}
-                                  disabled={currentPage === 1}
-                                >
-                                  <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                <div className="text-sm font-medium">
-                                  Trang {currentPage} / {ordersData?.meta?.totalPages}
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={goToNextPage}
-                                  disabled={currentPage === ordersData?.meta?.totalPages}
-                                >
-                                  <ChevronRight className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={goToLastPage}
-                                  disabled={currentPage === ordersData?.meta?.totalPages}
-                                >
-                                  <ChevronsRight className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm text-muted-foreground">Hiển thị:</span>
-                                <select
-                                  value={itemsPerPage}
-                                  onChange={(e) => {
-                                    setItemsPerPage(Number(e.target.value));
-                                    setCurrentPage(1); // Reset to first page when changing items per page
-                                  }}
-                                  className="h-8 rounded border text-sm"
-                                >
-                                  <option value="5">5</option>
-                                  <option value="10">10</option>
-                                  <option value="20">20</option>
-                                  <option value="50">50</option>
-                                </select>
+                              <div className="text-sm text-muted-foreground">
+                                Hiển thị tất cả
                               </div>
                             </div>
                           )}

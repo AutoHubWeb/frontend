@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useRouter } from "next/navigation"
 import { UserPlus, User, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/features/auth";
@@ -19,7 +19,7 @@ interface RegisterFormProps {
 
 export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
   const router = useRouter();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const { register, isLoading } = useAuth();
 
   // Form setup with validation

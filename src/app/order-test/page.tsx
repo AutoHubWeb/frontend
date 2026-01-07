@@ -7,10 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateOrder } from "@/lib/api/hooks/useOrders";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 
 export default function OrderTestPage() {
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const [toolId, setToolId] = useState("68fb9ff0fc48161fbb262c03");
   const [duration, setDuration] = useState("3");
   

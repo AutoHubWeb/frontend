@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/app/providers";
 import { useAuth, useLogout } from "@/features/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { Moon, Sun, Menu, User, Send, Wrench, Server, LogOut } from "lucide-react";
 import {
   DropdownMenu,
@@ -24,7 +24,7 @@ export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const logoutMutation = useLogout();
 
   const handleLogout = async () => {

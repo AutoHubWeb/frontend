@@ -5,7 +5,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useAuth } from "@/features/auth";
 import { useCreateOrder } from "@/lib/api/hooks/useOrders";
 import { useVpsPlans } from "@/lib/api/hooks/useVps";
@@ -45,7 +45,7 @@ interface VPSPlan {
 
 export default function VpsPurchase() {
   const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const [selectedVps, setSelectedVps] = useState<VPSPlan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { usePageReload } from "@/hooks/usePageReload"
 import {
   Dialog,
   DialogContent,
@@ -27,24 +26,26 @@ import {
 
 export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const isReload = usePageReload();
-
+  
   useEffect(() => {
-    // Reset session flag when component mounts (new page load)
-    sessionStorage.removeItem('welcome-modal-shown-session');
+    // Check if modal was shown in the last hour
+    const lastShown = sessionStorage.getItem('welcome-modal-last-shown');
+    const now = Date.now();
     
-    // Only show modal on reload
-    if (isReload) {
+    // 1 hour in milliseconds = 60 * 60 * 1000
+    const oneHour = 60 * 60 * 1000;
+    
+    if (!lastShown || (now - parseInt(lastShown)) > oneHour) {
       // Show modal after a short delay for better UX
       const timer = setTimeout(() => {
         setIsOpen(true);
-        // Mark as shown in this session to prevent multiple displays
-        sessionStorage.setItem('welcome-modal-shown-session', 'true');
+        // Update the last shown time
+        sessionStorage.setItem('welcome-modal-last-shown', now.toString());
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [isReload]);
+  }, []); // Empty dependency array to only run once on mount
 
   const handleClose = () => {
     setIsOpen(false);

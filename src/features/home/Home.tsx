@@ -5,7 +5,7 @@ import { Layout } from "@/components";
 import { ToolCard } from "@/features/tools";
 import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useTools } from "@/lib/api/hooks/useTools";
 import { useTopUpUsers, useUserTransactions } from "@/lib/api/hooks/useTransactions";
 import { useProxies } from "@/lib/api/hooks/useProxy";
@@ -55,7 +55,7 @@ import { useCreateOrder } from "@/lib/api/hooks/useOrders";
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");

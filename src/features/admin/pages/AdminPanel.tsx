@@ -26,7 +26,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 ;
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import type { User, Tool, KeyValidation } from "@shared/schema";
 
 interface AdminStats {
@@ -49,7 +49,7 @@ interface UserWithStats extends User {
 export default function AdminPanel() {
   const { section } = useParams<{ section?: string }>();
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
 
   // Check if user is admin
   useEffect(() => {

@@ -7,7 +7,7 @@ import { Layout } from "@/components";
 import { motion } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useToolById } from "@/lib/api/hooks/useTools";
 import { useCreateOrder } from "@/lib/api/hooks/useOrders";
 import { isUnauthorizedError } from "@/lib/api";
@@ -35,7 +35,7 @@ import { useState } from "react";
 export default function ToolDetails() {
   const { id } = useParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const queryClient = useQueryClient();
 
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useAuth, useUpdateProfile, useChangePassword, useCurrentUser } from "@/features/auth";
 import { User, Calendar, Mail, Phone, Wallet, Edit2, Save, X, Shield, Lock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -48,7 +48,7 @@ type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 export default function Profile() {
   const { isAuthenticated } = useAuth();
   const { data: user, refetch: refetchUser } = useCurrentUser({ enabled: true });
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 

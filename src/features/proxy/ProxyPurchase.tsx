@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Layout } from "@/components"
 import { motion } from "framer-motion"
 import { useAuth } from "@/features/auth"
-import { useToast } from "@/hooks/use-toast"
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { useProxies } from "@/lib/api/hooks/useProxy"
 import { useCreateOrder } from "@/lib/api/hooks/useOrders"
 import { Card, CardContent } from "@/components/ui/card"
@@ -22,7 +22,7 @@ import {
 
 export function ProxyPurchase() {
   const { isAuthenticated } = useAuth()
-  const { toast } = useToast()
+  const { rateLimitedToast: toast } = useRateLimitedToast()
   
   // Fetch proxies
   const { 

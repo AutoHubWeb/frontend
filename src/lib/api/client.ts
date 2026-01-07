@@ -13,7 +13,8 @@ import {
 import { 
   ApiException, 
   parseApiError, 
-  logError
+  logError,
+  isUnauthorizedError
 } from './errors';
 
 // Token management utilities - SSR safe
@@ -60,6 +61,71 @@ export const tokenManager = {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKENS);
     localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
+  },
+
+  // Check if token is expired by decoding JWT payload
+  isTokenExpired: (token: string | null): boolean => {
+    if (!token) return true;
+    
+    try {
+      // Split the token to get the payload part
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      
+      // Decode the payload (second part)
+      const payload = parts[1];
+      // Add padding if needed
+      const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
+      const decodedPayload = atob(paddedPayload);
+      
+      const parsedPayload = JSON.parse(decodedPayload);
+      
+      // Check if the token is expired (exp claim)
+      const currentTime = Math.floor(Date.now() / 1000);
+      return parsedPayload.exp < currentTime;
+    } catch (error) {
+      // If there's an error decoding, assume the token is invalid/expired
+      return true;
+    }
+  },
+
+  // Check if current access token is expired
+  isAccessTokenExpired: (): boolean => {
+    const tokens = tokenManager.getTokens();
+    return tokenManager.isTokenExpired(tokens?.accessToken);
+  },
+
+  // Check if we're on a protected route that requires authentication
+  isProtectedRoute: (): boolean => {
+    if (typeof window === 'undefined') return false;
+    
+    const currentPath = window.location.pathname;
+    // Define routes that are protected (require authentication)
+    const protectedRoutes = [
+      '/',
+      '/profile',
+      '/tools',
+      '/purchased-tools',
+      '/history',
+      '/statistics',
+      '/admin',
+      '/checkout',
+      '/deposit',
+      '/vps',
+      '/proxy',
+      '/orders',
+      '/order-test',
+      '/test-order',
+      '/api-test',
+      '/fetch-test',
+      // Add other protected routes as needed
+    ];
+    
+    // Check if current path matches any protected route
+    // Using startsWith to match routes with dynamic segments like /tools/[id]
+    return protectedRoutes.some(route => 
+      currentPath === route || (currentPath.startsWith(`${route}/`) && route !== '/') // avoid matching everything
+    ) || currentPath === '/'; // Root path is also protected
   }
 };
 
@@ -97,7 +163,25 @@ export class ApiClient {
   // Add authentication token to headers
   private addAuthToken(headers: Record<string, string>): Record<string, string> {
     const tokens = tokenManager.getTokens();
+    
+    // Only check token expiration if we have tokens
     if (tokens?.accessToken) {
+      // Check if access token is expired
+      if (tokenManager.isAccessTokenExpired()) {
+        // Only redirect to login if we're on a protected route
+        if (tokenManager.isProtectedRoute()) {
+          // Clear expired tokens and redirect to login
+          tokenManager.clearAll();
+          
+          // Redirect to login page
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
+        
+        return headers; // Don't add expired token to headers
+      }
+      
       return {
         ...headers,
         Authorization: `Bearer ${tokens.accessToken}`,
@@ -142,6 +226,20 @@ export class ApiClient {
       const responseData: ApiResponse<T> = await response.json();
       
       if (!response.ok) {
+        // Check if it's an unauthorized error (401)
+        if (response.status === 401) {
+          // Only redirect to login if we're on a protected route
+          if (tokenManager.isProtectedRoute()) {
+            // Clear tokens and redirect to login
+            tokenManager.clearAll();
+            
+            // Redirect to login page
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+          }
+        }
+        
         // Create a proper error object with response data
         const error: any = new Error(responseData.message || `HTTP ${response.status}: ${response.statusText}`);
         error.response = {
@@ -154,6 +252,21 @@ export class ApiClient {
       return responseData;
     } catch (error: any) {
       const apiError = parseApiError(error);
+      
+      // Check if the error is an unauthorized error
+      if (isUnauthorizedError(error)) {
+        // Only redirect to login if we're on a protected route
+        if (tokenManager.isProtectedRoute()) {
+          // Clear tokens and redirect to login
+          tokenManager.clearAll();
+          
+          // Redirect to login page
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
+      }
+      
       logError(apiError, `API Request ${config.method} ${config.url}`);
       throw apiError;
     }

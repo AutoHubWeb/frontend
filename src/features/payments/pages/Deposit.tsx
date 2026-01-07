@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Layout } from "@/components";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useRateLimitedToast } from "@/hooks/use-rate-limited-toast";
 import { isUnauthorizedError } from "@/lib/api";
 import { tokenManager } from "@/lib/api/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,11 +42,13 @@ interface ConvertedTransaction {
 
 export default function Deposit() {
   const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { rateLimitedToast: toast } = useRateLimitedToast();
   const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState("");
   const [userCode, setUserCode] = useState("");
+  const [loadingUserCode, setLoadingUserCode] = useState(true);
+  const [userCodeError, setUserCodeError] = useState(false);
 
   // Fetch proxies
   const { data: proxiesResponse, isLoading: proxiesLoading } = useProxies();
@@ -68,6 +70,56 @@ export default function Deposit() {
     createdAt: item.createdAt
   })) || [];
 
+  // Fetch user code on component mount
+  useEffect(() => {
+    const fetchUserCode = async () => {
+      if (isAuthenticated && user) {
+        try {
+          const tokens = tokenManager.getTokens();
+          const meResponse = await fetch("https://api.shoptoolnro.com.vn/api/v1/auth/me", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              // Add auth token if available
+              ...(tokens?.accessToken && {
+                "Authorization": `Bearer ${tokens.accessToken}`
+              })
+            }
+          });
+          
+          if (!meResponse.ok) {
+            if (meResponse.status === 401) {
+              // Token expired, redirect to login
+              tokenManager.clearAll();
+              window.location.href = "/login";
+              return;
+            }
+            throw new Error(`HTTP ${meResponse.status}: ${meResponse.statusText}`);
+          }
+          
+          const userData = await meResponse.json();
+          const code = userData?.data?.code || userData?.code || '';
+          setUserCode(code);
+          setUserCodeError(false);
+        } catch (error) {
+          console.error('Error fetching user code:', error);
+          setUserCodeError(true);
+          // If unauthorized, redirect to login
+          if (isUnauthorizedError(error)) {
+            tokenManager.clearAll();
+            window.location.href = "/login";
+          }
+        } finally {
+          setLoadingUserCode(false);
+        }
+      } else {
+        setLoadingUserCode(false);
+      }
+    };
+    
+    fetchUserCode();
+  }, [isAuthenticated, user]);
+
   const depositMutation = useMutation({
     mutationFn: async () => {
       if (!amount || Number(amount) <= 0) {
@@ -87,8 +139,18 @@ export default function Deposit() {
         }
       });
       
+      if (!meResponse.ok) {
+        if (meResponse.status === 401) {
+          // Token expired, redirect to login
+          tokenManager.clearAll();
+          window.location.href = "/login";
+          return;
+        }
+        throw new Error(`HTTP ${meResponse.status}: ${meResponse.statusText}`);
+      }
+      
       const userData = await meResponse.json();
-      const code = userData?.data?.code || userData?.code || user?.email?.split('@')[0] || 'olsy2wHd';
+      const code = userData?.data?.code || userData?.code || '';
       setUserCode(code);
       
       // Create QR code URL
@@ -122,7 +184,7 @@ export default function Deposit() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "https://api.shoptoolnro.com.vn/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -259,8 +321,64 @@ export default function Deposit() {
                         <p><strong>Chủ tài khoản:</strong> NGUYEN QUY LINH CONG</p>
                         <p><strong>Nội dung:</strong> 
                           <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">
-                            {userCode || (user ? user.code?.split('@')[0] || 'Đang tải...' : 'Đang tải...')}
+                            {loadingUserCode 
+                              ? 'Đang tải...' 
+                              : userCodeError 
+                                ? 'Lỗi tải mã - Vui lòng thử lại' 
+                                : userCode 
+                                  ? userCode 
+                                  : (user ? 'Chưa có mã - Vui lòng thử lại' : 'Vui lòng đăng nhập')}
                           </span>
+                          {!loadingUserCode && (userCodeError || (!userCode && user)) && (
+                            <button 
+                              onClick={() => {
+                                setLoadingUserCode(true);
+                                setUserCodeError(false);
+                                const fetchUserCode = async () => {
+                                  try {
+                                    const tokens = tokenManager.getTokens();
+                                    const meResponse = await fetch("https://api.shoptoolnro.com.vn/api/v1/auth/me", {
+                                      method: "GET",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                        ...(tokens?.accessToken && {
+                                          "Authorization": `Bearer ${tokens.accessToken}`
+                                        })
+                                      }
+                                    });
+                                    
+                                    if (!meResponse.ok) {
+                                      if (meResponse.status === 401) {
+                                        tokenManager.clearAll();
+                                        window.location.href = "/login";
+                                        return;
+                                      }
+                                      throw new Error(`HTTP ${meResponse.status}: ${meResponse.statusText}`);
+                                    }
+                                    
+                                    const userData = await meResponse.json();
+                                    const code = userData?.data?.code || userData?.code || '';
+                                    setUserCode(code);
+                                    setUserCodeError(false);
+                                  } catch (error) {
+                                    console.error('Error fetching user code:', error);
+                                    setUserCodeError(true);
+                                    if (isUnauthorizedError(error)) {
+                                      tokenManager.clearAll();
+                                      window.location.href = "/login";
+                                    }
+                                  } finally {
+                                    setLoadingUserCode(false);
+                                  }
+                                };
+                                fetchUserCode();
+                              }}
+                              className="ml-2 text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                              disabled={loadingUserCode}
+                            >
+                              {userCodeError ? 'Thử lại' : 'Làm mới'}
+                            </button>
+                          )}
                         </p>
                       </div>
                     </div>
